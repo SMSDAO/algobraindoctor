@@ -2,343 +2,343 @@ import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
-  CheckCircle,
-  Warning,
-  XCircle,
+  Warnin
   Info,
-  ShieldCheck,
   Pulse,
-  Wrench,
-  CalendarBlank,
-  DownloadSimple,
-} from '@phosphor-icons/react'
-import { TimelineEvent } from '@/lib/types'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+  Calendar
+} from 
+import { cn } 
 
-interface HealthTimelineProps {
-  events: TimelineEvent[]
-  className?: string
-  maxHeight?: string
-}
+  events:
+  maxHeight?: st
 
-export function HealthTimeline({ events, className, maxHeight = '600px' }: HealthTimelineProps) {
-  const [filter, setFilter] = useState<'all' | 'scan' | 'governance' | 'healing'>('all')
-  const [severityFilter, setSeverityFilter] = useState<'all' | 'info' | 'warning' | 'error' | 'success' | 'critical'>('all')
-  const [expandedEvent, setExpandedEvent] = useState<string | null>(null)
-
+  const [filter, setFilter] = 
+  const [expandedEvent, setExpandedEvent] =
   const filteredEvents = events
-    .filter((event) => filter === 'all' || event.type === filter)
-    .filter((event) => severityFilter === 'all' || event.severity === severityFilter)
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .filter((event) => severit
 
-  const getEventIcon = (event: TimelineEvent) => {
     switch (event.severity) {
-      case 'success':
-        return CheckCircle
-      case 'warning':
-        return Warning
-      case 'error':
-        return XCircle
-      case 'critical':
-        return XCircle
-      default:
-        return Info
-    }
-  }
+        return CheckCircl
+        return Warni
+        return XCirc
+ 
 
+  }
   const getEventColor = (event: TimelineEvent) => {
-    switch (event.severity) {
       case 'success':
-        return {
           text: 'text-[var(--aura-aqua)]',
-          glow: 'glow-aqua',
-          border: 'neon-border-aqua',
-          bg: 'bg-[var(--aura-aqua)]/10',
+
         }
-      case 'warning':
         return {
-          text: 'text-[var(--aura-yellow)]',
           glow: 'glow-yellow',
-          border: 'neon-border-yellow',
           bg: 'bg-[var(--aura-yellow)]/10',
-        }
-      case 'error':
-      case 'critical':
+
         return {
-          text: 'text-[var(--aura-coral)]',
           glow: 'glow-coral',
-          border: 'neon-border-coral',
-          bg: 'bg-[var(--aura-coral)]/10',
-        }
+          bg: 'bg-[va
       default:
-        return {
-          text: 'text-[var(--aura-violet)]',
-          glow: 'glow-violet',
-          border: 'neon-border-violet',
-          bg: 'bg-[var(--aura-violet)]/10',
+          text: 'text
+          border: 'neo
         }
-    }
   }
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
+  const getTypeIcon = 
       case 'scan':
-        return Pulse
-      case 'governance':
-        return ShieldCheck
-      case 'healing':
-        return Wrench
-      default:
-        return Info
-    }
-  }
+      case 'go
+      case 'healing
+     
+   
 
-  const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
+    const diffMs = now.getTim
+    const diffHours =
 
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString()
+    if (diffMins < 60) return `${diffMins}
+    if (diffDays < 7) return
   }
-
-  const formatFullTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString()
+  const formatFullTimestamp = (timestamp:
   }
-
-  const handleExport = () => {
-    try {
-      const exportData = {
-        exportDate: new Date().toISOString(),
+  const handleExport 
+      const expo
         totalEvents: filteredEvents.length,
-        filters: {
           type: filter,
-          severity: severityFilter,
         },
-        events: filteredEvents,
       }
-      
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: 'application/json',
+      con
       })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `health-timeline-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(a)
+      const a = docume
+      a.download
       a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      
-      toast.success('Timeline exported', {
-        description: `${filteredEvents.length} events exported to JSON`,
+      URL.revokeObjectURL(url
+      toast.success('Timeline exported
       })
-    } catch (error) {
-      toast.error('Export failed', {
-        description: 'Could not export timeline data',
+      toa
       })
-      console.error('Export error:', error)
     }
-  }
 
-  return (
-    <div className={cn('space-y-4', className)}>
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <CalendarBlank size={20} className="text-muted-foreground" />
-          <span className="text-sm font-space font-semibold">Health Timeline</span>
-          <Badge variant="outline" className="font-mono text-xs">
-            {filteredEvents.length} events
-          </Badge>
-        </div>
+    <div className={cn('space-
+        <div className="flex items-cent
+          <span className="text-sm font-spa
+         
+     
+   
 
-        <div className="flex items-center gap-2 ml-auto">
-          <Button
-            size="sm"
-            variant="outline"
             onClick={handleExport}
-            disabled={filteredEvents.length === 0}
-            className="h-8"
-          >
-            <DownloadSimple size={16} className="mr-1.5" />
-            Export
+            classNa
+            <Downl
           </Button>
-
-          <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-            <SelectTrigger className="w-32 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="scan">Scans</SelectItem>
-              <SelectItem value="governance">Governance</SelectItem>
-              <SelectItem value="healing">Healing</SelectItem>
-            </SelectContent>
+          <Select value=
+              <SelectValue
+            <SelectCo
+              <Select
+              
           </Select>
+     
+   
 
-          <Select value={severityFilter} onValueChange={(v) => setSeverityFilter(v as typeof severityFilter)}>
-            <SelectTrigger className="w-32 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Severity</SelectItem>
-              <SelectItem value="success">Success</SelectItem>
-              <SelectItem value="info">Info</SelectItem>
-              <SelectItem value="warning">Warning</SelectItem>
-              <SelectItem value="error">Error</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-            </SelectContent>
+              <SelectItem value="success">Success<
+              <SelectItem value="war
+              <SelectItem 
           </Select>
-        </div>
       </div>
-
-      <ScrollArea className="rounded-lg border border-border bg-card/30" style={{ height: maxHeight }}>
-        <div className="p-4">
+      <ScrollArea className="rounded-lg border bor
           {filteredEvents.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <Pulse size={32} className="mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No events found</p>
+
             </div>
-          ) : (
             <div className="space-y-3">
-              {filteredEvents.map((event, index) => {
                 const Icon = getEventIcon(event)
-                const TypeIcon = getTypeIcon(event.type)
-                const colors = getEventColor(event)
-                const isExpanded = expandedEvent === event.id
-                const isLast = index === filteredEvents.length - 1
+                const colors = getEventColor(ev
+                const isLast = index
+   
 
-                return (
-                  <div key={event.id} className="relative">
-                    {!isLast && (
-                      <div
-                        className="absolute left-[19px] top-10 bottom-[-12px] w-[2px] bg-border"
-                        style={{ opacity: 0.3 }}
+                        className="absolute left-[19px
                       />
-                    )}
 
-                    <div
-                      className={cn(
-                        'relative p-4 rounded-lg border bg-card/50 transition-all duration-200',
-                        colors.border,
-                        isExpanded && colors.glow,
-                        'hover:bg-card/70 cursor-pointer'
-                      )}
-                      onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
+
+                        colors
+         
+                      onCl
+                      <div className="flex it
                           className={cn(
-                            'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                            colors.bg,
-                            colors.border
-                          )}
-                        >
-                          <Icon size={20} className={colors.text} />
-                        </div>
+                  
+                       
+                          <Icon siz
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-space font-semibold text-sm">
-                                {event.title}
-                              </span>
-                              <div className="flex items-center gap-1.5">
+                          <div 
+       
+      
                                 <Badge
-                                  variant="outline"
-                                  className={cn('text-xs', colors.bg, colors.border)}
-                                >
-                                  <TypeIcon size={12} className="mr-1" />
-                                  {event.type}
+                                 
+        
                                 </Badge>
-                                <Badge variant="secondary" className="text-xs">
-                                  {event.severity}
-                                </Badge>
-                              </div>
-                            </div>
-                            <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
-                              {formatTimestamp(event.timestamp)}
-                            </span>
-                          </div>
+                                  {event.se
+                  
+                            <span className="text-xs text-muted-foreground font-mon
+                            </span
 
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {event.description}
-                          </p>
+                            {event
 
-                          {isExpanded && event.metadata && (
-                            <div className="mt-3 space-y-2 pt-3 border-t border-border">
-                              <div className="text-xs text-muted-foreground font-mono">
-                                {formatFullTimestamp(event.timestamp)}
-                              </div>
+      
+                                {formatFul
 
-                              {typeof event.metadata.oldScore === 'number' && typeof event.metadata.newScore === 'number' && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <span className="text-muted-foreground">Score:</span>
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      'font-mono',
-                                      event.metadata.newScore > event.metadata.oldScore
-                                        ? 'text-green-400'
-                                        : 'text-red-400'
-                                    )}
+        
+                     
+                                    
+                                      event.metadata.n
+        
                                   >
-                                    <span className="opacity-60">{event.metadata.oldScore}</span>
-                                    <span className="mx-1">→</span>
-                                    <span>{event.metadata.newScore}</span>
-                                    <span className="ml-1">
-                                      {event.metadata.newScore > event.metadata.oldScore ? '+' : ''}
-                                      {event.metadata.newScore - event.metadata.oldScore}
-                                    </span>
-                                  </Badge>
-                                </div>
-                              )}
+     
+   
 
-                              {typeof event.metadata.duration === 'number' && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <span className="text-muted-foreground">Duration:</span>
-                                  <Badge variant="secondary" className="neon-border-yellow font-mono">
+          
+                              )}
+                              {typeof event.metadata.dura
+                                  <span className
                                     {event.metadata.duration}ms
-                                  </Badge>
                                 </div>
-                              )}
 
-                              {typeof event.metadata.framework === 'string' && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <span className="text-muted-foreground">Framework:</span>
-                                  <Badge variant="secondary">{event.metadata.framework}</Badge>
-                                </div>
-                              )}
+                                <div class
+                  
+              
 
-                              {Object.entries(event.metadata)
-                                .filter(([key]) => !['oldScore', 'newScore', 'duration', 'framework'].includes(key))
                                 .map(([key, value]) => (
-                                  <div key={key} className="flex items-center gap-2 text-sm">
-                                    <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}:</span>
-                                    <span className="font-mono text-xs">{String(JSON.stringify(value))}</span>
-                                  </div>
-                                ))}
-                            </div>
-                          )}
+                 
+                     
+                            <
                         </div>
-                      </div>
                     </div>
-                  </div>
                 )
-              })}
-            </div>
-          )}
+           
         </div>
-      </ScrollArea>
     </div>
-  )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
