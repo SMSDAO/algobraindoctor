@@ -1,21 +1,21 @@
 import { useMemo } from 'react'
-import { Repository, Worker } from '@/lib/types'
+import {
 import {
   Area,
-  AreaChart,
-  CartesianGrid,
   XAxis,
-  YAxis,
   Tooltip,
-  ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
-  Legend,
-} from 'recharts'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+  Radial
+  Legend
+import { C
 import {
-  ChartLine,
+  TrendUp,
+  GitBranch,
+  Pulse,
+  Lightning,
+import { cn } from '@/lib/utils'
+interface FleetHealthChartsProps {
+  worker
+}
   TrendUp,
   TrendDown,
   GitBranch,
@@ -191,31 +191,31 @@ export function FleetHealthCharts({ repositories, workers, className }: FleetHea
           </ResponsiveContainer>
         </Card>
 
-        <Card className="p-4 sm:p-6 border-border bg-card/50">
-          <div className="mb-4 sm:mb-6">
-            <h3 className="text-sm sm:text-base font-space font-semibold flex items-center gap-2">
-              <GitBranch size={18} className="sm:w-5 sm:h-5 text-[var(--aura-violet)]" />
+        <Card className="p-6 border-border bg-card/50">
+          <div className="mb-6">
+            <h3 className="text-base font-space font-semibold flex items-center gap-2">
+              <GitBranch size={20} className="text-[var(--aura-violet)]" />
               Repository Health Distribution
             </h3>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Number of repositories by health score range
             </p>
           </div>
 
-          <div className="space-y-2 sm:space-y-3">
+          <div className="space-y-3">
             {scoreDistributionData.map((item) => (
-              <div key={item.range} className="space-y-1 sm:space-y-1.5">
-                <div className="flex items-center justify-between text-xs sm:text-sm">
-                  <div className="flex items-center gap-1.5 sm:gap-2">
+              <div key={item.range} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
                     <div
-                      className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                      className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: item.fill }}
                     />
                     <span className="font-mono font-medium">{item.range}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="flex items-center gap-2">
                     <span className="font-mono text-muted-foreground">{item.count}</span>
-                    <Badge variant="outline" className="font-mono text-[10px] sm:text-xs min-w-[40px] sm:min-w-[50px]">
+                    <Badge variant="outline" className="font-mono text-xs min-w-[50px]">
                       {repositories.length > 0
                         ? ((item.count / repositories.length) * 100).toFixed(0)
                         : 0}
@@ -223,7 +223,7 @@ export function FleetHealthCharts({ repositories, workers, className }: FleetHea
                     </Badge>
                   </div>
                 </div>
-                <div className="h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full transition-all duration-300"
                     style={{
@@ -241,20 +241,20 @@ export function FleetHealthCharts({ repositories, workers, className }: FleetHea
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-        <Card className="p-3 sm:p-4 border-border bg-card/50 neon-border-aqua">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[var(--aura-aqua)]/10 flex items-center justify-center flex-shrink-0">
-              <ShieldCheck size={18} className="sm:w-5 sm:h-5 text-[var(--aura-aqua)]" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4 border-border bg-card/50 neon-border-aqua">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-[var(--aura-aqua)]/10 flex items-center justify-center">
+              <ShieldCheck size={20} className="text-[var(--aura-aqua)]" />
             </div>
             <div>
-              <div className="text-[10px] sm:text-xs text-muted-foreground">Healthy Repos</div>
-              <div className="text-lg sm:text-xl font-mono font-bold text-[var(--aura-aqua)]">
+              <div className="text-xs text-muted-foreground">Healthy Repos</div>
+              <div className="text-xl font-mono font-bold text-[var(--aura-aqua)]">
                 {fleetStats.healthyRepos}
               </div>
             </div>
           </div>
-          <div className="text-[10px] sm:text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Score ≥ 80 •{' '}
             <span className="font-semibold text-foreground">
               {repositories.length > 0
@@ -266,19 +266,19 @@ export function FleetHealthCharts({ repositories, workers, className }: FleetHea
           </div>
         </Card>
 
-        <Card className="p-3 sm:p-4 border-border bg-card/50 neon-border-yellow">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[var(--aura-yellow)]/10 flex items-center justify-center flex-shrink-0">
-              <Lightning size={18} className="sm:w-5 sm:h-5 text-[var(--aura-yellow)]" />
+        <Card className="p-4 border-border bg-card/50 neon-border-yellow">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-[var(--aura-yellow)]/10 flex items-center justify-center">
+              <Lightning size={20} className="text-[var(--aura-yellow)]" />
             </div>
             <div>
-              <div className="text-[10px] sm:text-xs text-muted-foreground">Degraded Repos</div>
-              <div className="text-lg sm:text-xl font-mono font-bold text-[var(--aura-yellow)]">
+              <div className="text-xs text-muted-foreground">Degraded Repos</div>
+              <div className="text-xl font-mono font-bold text-[var(--aura-yellow)]">
                 {fleetStats.degradedRepos}
               </div>
             </div>
           </div>
-          <div className="text-[10px] sm:text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Score 50-79 •{' '}
             <span className="font-semibold text-foreground">
               {repositories.length > 0
@@ -290,166 +290,166 @@ export function FleetHealthCharts({ repositories, workers, className }: FleetHea
           </div>
         </Card>
 
-        <Card className="p-3 sm:p-4 border-border bg-card/50 neon-border-coral">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[var(--aura-coral)]/10 flex items-center justify-center flex-shrink-0">
-              <Pulse size={18} className="sm:w-5 sm:h-5 text-[var(--aura-coral)]" />
-            </div>
-            <div>
-              <div className="text-[10px] sm:text-xs text-muted-foreground">Critical Repos</div>
-              <div className="text-lg sm:text-xl font-mono font-bold text-[var(--aura-coral)]">
-                {fleetStats.criticalRepos}
-              </div>
-            </div>
-          </div>
-          <div className="text-[10px] sm:text-xs text-muted-foreground">
-            Score &lt; 50 •{' '}
-            <span className="font-semibold text-foreground">
-              {repositories.length > 0
-                ? ((fleetStats.criticalRepos / repositories.length) * 100).toFixed(0)
                 : 0}
-              %
             </span>{' '}
-            of fleet
           </div>
-        </Card>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <Card className="p-4 sm:p-6 border-border bg-card/50">
-          <div className="mb-3 sm:mb-4">
-            <h3 className="text-sm sm:text-base font-space font-semibold flex items-center gap-2">
+      <div classNa
+          <div cl
               <TrendUp size={18} className="sm:w-5 sm:h-5 text-green-400" />
-              Top Performers
             </h3>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              Highest health scores in fleet
-            </p>
+              Highest health scores in fle
           </div>
-          <div className="space-y-2">
-            {topRepos.length === 0 ? (
-              <div className="py-6 sm:py-8 text-center text-muted-foreground text-xs sm:text-sm">
-                No repositories yet
-              </div>
+            {topRe
+                
             ) : (
-              topRepos.map((repo, index) => (
                 <div
-                  key={repo.id}
-                  className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                    <Badge
+                  className="flex items-center justify-betwe
+                  <div className="flex
                       variant="outline"
-                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center p-0 font-mono text-[10px] sm:text-xs flex-shrink-0"
-                    >
-                      {index + 1}
-                    </Badge>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs sm:text-sm font-medium font-mono truncate">
-                        {repo.owner}/{repo.name}
-                      </div>
-                    </div>
-                  </div>
-                  <Badge
-                    className="font-mono font-bold neon-border-aqua glow-aqua text-xs ml-2 flex-shrink-0"
-                    variant="outline"
-                  >
-                    {repo.healthScore}
-                  </Badge>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
+                    
+               
+                      <d
+                    
+                
+               
+            
 
-        <Card className="p-4 sm:p-6 border-border bg-card/50">
+              ))
+          </div>
+
           <div className="mb-3 sm:mb-4">
-            <h3 className="text-sm sm:text-base font-space font-semibold flex items-center gap-2">
-              <TrendDown size={18} className="sm:w-5 sm:h-5 text-[var(--aura-coral)]" />
-              Needs Attention
+              <TrendDown size={18} className="sm:w-5 sm:h-5 te
             </h3>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              Lowest health scores in fleet
-            </p>
+              Low
           </div>
-          <div className="space-y-2">
             {bottomRepos.length === 0 ? (
-              <div className="py-6 sm:py-8 text-center text-muted-foreground text-xs sm:text-sm">
-                No repositories yet
-              </div>
-            ) : (
-              bottomRepos.map((repo, index) => (
+                
+            ) : 
                 <div
-                  key={repo.id}
-                  className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                    <Badge
-                      variant="outline"
-                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center p-0 font-mono text-[10px] sm:text-xs flex-shrink-0"
-                    >
-                      {index + 1}
-                    </Badge>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs sm:text-sm font-medium font-mono truncate">
-                        {repo.owner}/{repo.name}
-                      </div>
-                    </div>
+                  className="flex item
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 fle
+                      variant="outl
+                    
+                 
+                      <div className="text-xs
+                    
                   </div>
-                  <Badge
                     className="font-mono font-bold neon-border-coral glow-coral text-xs ml-2 flex-shrink-0"
-                    variant="outline"
-                  >
-                    {repo.healthScore}
+                 
                   </Badge>
-                </div>
               ))
-            )}
           </div>
-        </Card>
       </div>
-
-      <Card className="p-4 sm:p-6 border-border bg-card/50 neon-border-violet glow-violet">
-        <div className="mb-3 sm:mb-4">
-          <h3 className="text-sm sm:text-base font-space font-semibold flex items-center gap-2">
-            <Gear size={18} className="sm:w-5 sm:h-5 text-[var(--aura-violet)]" />
-            Worker Pool Status
-          </h3>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-            Current status of all parallel workers
+      <Card className
+          <h3 className="text-sm 
+            Worker Pool Stat
+          <p className="t
           </p>
-        </div>
 
-        <div className="grid grid-cols-3 gap-3 sm:gap-4">
-          <div className="p-3 sm:p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-            <div className="text-xl sm:text-2xl font-mono font-bold text-green-400 mb-1">
-              {workerStats.healthy}
+          <div className="p-
+              {workerStats
+            <div classNa
+
+            <div className="text-xl sm:text-2xl font-mono font-bold text-[var(
             </div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground">Healthy Workers</div>
           </div>
-
-          <div className="p-3 sm:p-4 rounded-lg bg-[var(--aura-yellow)]/10 border border-[var(--aura-yellow)]/30">
-            <div className="text-xl sm:text-2xl font-mono font-bold text-[var(--aura-yellow)] mb-1">
-              {workerStats.degraded}
-            </div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground">Degraded Workers</div>
-          </div>
-
-          <div className="p-3 sm:p-4 rounded-lg bg-[var(--aura-coral)]/10 border border-[var(--aura-coral)]/30">
-            <div className="text-xl sm:text-2xl font-mono font-bold text-[var(--aura-coral)] mb-1">
-              {workerStats.failed}
-            </div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground">Failed Workers</div>
-          </div>
+          <div className="p-3 sm:p-4 r
+              {workerStats
+            <div class
         </div>
+        <div c
+          <div c
+          </div
 
-        <div className="mt-3 sm:mt-4 p-2.5 sm:p-3 rounded-lg bg-muted/30 border border-border">
-          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1 sm:mb-2">Total Jobs Completed</div>
-          <div className="text-lg sm:text-xl font-mono font-bold text-[var(--aura-violet)]">
-            {workers.reduce((sum, w) => sum + w.jobsCompleted, 0).toLocaleString()}
-          </div>
-        </div>
-      </Card>
-    </div>
   )
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
