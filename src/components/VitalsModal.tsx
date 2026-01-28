@@ -157,8 +157,7 @@ export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: V
 
           <TabsContent value="timeline" className="flex-1 overflow-hidden py-4">
             <HealthTimeline 
-              events={timelineEvents} 
-              maxHeight="calc(90vh - 280px)"
+              events={timelineEvents}
             />
           </TabsContent>
         </Tabs>

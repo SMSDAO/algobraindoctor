@@ -1,24 +1,24 @@
 import { useState } from 'react'
-import { ScrollArea } from '@/components/ui/scr
-import { Select, SelectContent, SelectItem, SelectTrigge
-  Warning,
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Warning,
   Info,
   GitBranch,
-} from '@p
-import { cn
+  ShieldCheck,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Download,
+} from '@phosphor-icons/react'
+import { cn } from '@/lib/utils'
+import { TimelineEvent } from '@/lib/types'
+import { toast } from 'sonner'
 
-  events: Ti
-}
-export function HealthTimeline
-  const [filter, setFilter] = useState<stri
-  const filteredEvents = events.
-    return event.type === filt
-
-    switch (severity) {
-        return CheckCircl
+interface HealthTimelineProps {
+  events: TimelineEvent[]
 }
 
 export function HealthTimeline({ events }: HealthTimelineProps) {
@@ -37,7 +37,7 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
       case 'warning':
       case 'critical':
         return Warning
-      case 'warning
+      case 'error':
         return XCircle
       case 'info':
       default:
@@ -64,20 +64,20 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
         return {
           bg: 'bg-[var(--aura-coral)]/10',
           border: 'neon-border-coral',
-      case 'governance':
-      def
+          text: 'text-[var(--aura-coral)]',
+        }
       case 'info':
       default:
-
+        return {
           bg: 'bg-[var(--aura-blue)]/10',
           border: 'neon-border-blue',
           text: 'text-[var(--aura-blue)]',
         }
-
+    }
   }
 
   const getTypeIcon = (type: TimelineEvent['type']) => {
-  }
+    switch (type) {
       case 'scan':
         return GitBranch
       case 'healing':
@@ -101,30 +101,31 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
     if (diffMins < 60) return `${diffMins}m ago`
     if (diffHours < 24) return `${diffHours}h ago`
     if (diffDays < 7) return `${diffDays}d ago`
-            size="sm"
+    return date.toLocaleDateString()
   }
 
   const handleExport = () => {
-         
+    try {
       const exportData = {
         exportDate: new Date().toISOString(),
         events: filteredEvents,
-              <Se
+        filter: {
           type: filter,
-          
-       
+          count: filteredEvents.length,
+        },
+      }
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = `timeline-export-${Date.now()}.json`
-            fil
+      a.click()
       URL.revokeObjectURL(url)
       toast.success('Timeline exported successfully')
     } catch (error) {
       toast.error('Failed to export timeline')
     }
-   
+  }
 
   return (
     <div className="space-y-4">
@@ -134,11 +135,11 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
           <h3 className="text-base font-space font-semibold">Activity Timeline</h3>
           <Badge variant="outline" className="text-xs">
             {filteredEvents.length} events
-                  
+          </Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button
-                     
+            size="sm"
             variant="outline"
             onClick={handleExport}
             disabled={filteredEvents.length === 0}
@@ -149,16 +150,16 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-32">
               <SelectValue />
-                            
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Events</SelectItem>
               <SelectItem value="scan">Scans</SelectItem>
               <SelectItem value="healing">Healing</SelectItem>
               <SelectItem value="governance">Governance</SelectItem>
             </SelectContent>
-                   
+          </Select>
         </div>
-            
+      </div>
 
       <ScrollArea className="h-[500px] pr-4">
         <div className="space-y-3">
@@ -182,7 +183,6 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
                     colors.bg,
                     isExpanded && 'ring-2 ring-primary/20'
                   )}
-                  style={{ height: isExpanded ? 'auto' : 'auto' }}
                   onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
                 >
                   <div className="flex items-start gap-3">
@@ -202,7 +202,7 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
                               {event.severity}
                             </Badge>
                           )}
-
+                        </div>
                         <span className="text-xs text-muted-foreground font-mono flex-shrink-0">
                           {formatRelativeTime(event.timestamp)}
                         </span>
@@ -227,8 +227,8 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
                                     </span>
                                   </div>
                                 ))}
-                              {event.metadata.oldScore !== undefined &&
-                                event.metadata.newScore !== undefined && (
+                              {typeof event.metadata.oldScore === 'number' &&
+                                typeof event.metadata.newScore === 'number' && (
                                   <div className="col-span-2 flex items-center gap-2 mt-1">
                                     <span className="text-muted-foreground">Score:</span>
                                     <span className="text-foreground">
@@ -242,7 +242,7 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
                                 )}
                             </div>
                           </div>
-
+                        </div>
                       )}
                     </div>
                   </div>
@@ -250,8 +250,8 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
               )
             })
           )}
-
+        </div>
       </ScrollArea>
-
+    </div>
   )
-
+}
