@@ -1,1 +1,134 @@
-/* This is where custom CSS goes */
+@import 'tailwindcss';
+@import "tw-animate-css";
+
+@layer base {
+  * {
+    @apply border-border
+  }
+}
+
+:root {
+  --background: oklch(0.12 0.01 250);
+  --foreground: oklch(0.98 0 0);
+
+  --card: oklch(0.15 0.01 250);
+  --card-foreground: oklch(0.9 0 0);
+  --popover: oklch(0.15 0.01 250);
+  --popover-foreground: oklch(0.9 0 0);
+
+  --primary: oklch(0.72 0.15 290);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.75 0.12 195);
+  --secondary-foreground: oklch(0.15 0.01 250);
+  --accent: oklch(0.65 0.2 240);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.7 0.18 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --muted: oklch(0.2 0.01 250);
+  --muted-foreground: oklch(0.6 0 0);
+  --border: oklch(0.25 0.01 250);
+  --input: oklch(0.25 0.01 250);
+  --ring: oklch(0.72 0.15 290);
+
+  --radius: 0.5rem;
+
+  --aura-violet: oklch(0.72 0.15 290);
+  --aura-aqua: oklch(0.75 0.12 195);
+  --aura-coral: oklch(0.7 0.18 25);
+  --aura-yellow: oklch(0.85 0.15 95);
+  --aura-blue: oklch(0.65 0.2 240);
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-xl: calc(var(--radius) * 2);
+  --radius-2xl: calc(var(--radius) * 3);
+  --radius-full: 9999px;
+
+  --font-space: "Space Grotesk", system-ui, sans-serif;
+  --font-inter: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  font-family: var(--font-inter);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-space);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes neon-sweep {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.glow-violet {
+  box-shadow: 0 0 12px oklch(0.72 0.15 290 / 0.5);
+}
+
+.glow-aqua {
+  box-shadow: 0 0 12px oklch(0.75 0.12 195 / 0.5);
+}
+
+.glow-coral {
+  box-shadow: 0 0 12px oklch(0.7 0.18 25 / 0.5);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 12px oklch(0.85 0.15 95 / 0.5);
+}
+
+.glow-blue {
+  box-shadow: 0 0 12px oklch(0.65 0.2 240 / 0.5);
+}
+
+.neon-border-violet {
+  border: 1px solid oklch(0.72 0.15 290 / 0.3);
+}
+
+.neon-border-aqua {
+  border: 1px solid oklch(0.75 0.12 195 / 0.3);
+}
+
+.neon-border-coral {
+  border: 1px solid oklch(0.7 0.18 25 / 0.3);
+}
+
+.neon-border-yellow {
+  border: 1px solid oklch(0.85 0.15 95 / 0.3);
+}
