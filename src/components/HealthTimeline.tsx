@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/butto
-import {
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   CheckCircle,
   Warning,
@@ -11,25 +10,19 @@ import {
   Info,
   ShieldCheck,
   Pulse,
-  GitBranch,
-  Key,
   Wrench,
-  Gear,
-  Down
-import { c
+  CalendarBlank,
+  DownloadSimple,
+} from '@phosphor-icons/react'
+import { TimelineEvent } from '@/lib/types'
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
-  event
-  maxHeight?: st
-
-  const [filter, setFilter] = 
-  const [expandedEvent, setExpan
-  const filteredEvents = event
-
-
-    total: filteredEvents
-      scan: filtered
-      healing: filte
- 
+interface HealthTimelineProps {
+  events: TimelineEvent[]
+  className?: string
+  maxHeight?: string
+}
 
 export function HealthTimeline({ events, className, maxHeight = '600px' }: HealthTimelineProps) {
   const [filter, setFilter] = useState<'all' | 'scan' | 'governance' | 'healing'>('all')
@@ -262,109 +255,90 @@ export function HealthTimeline({ events, className, maxHeight = '600px' }: Healt
                               <div className="flex items-center gap-1.5">
                                 <Badge
                                   variant="outline"
-                            colors.bg,
-                          )}
-                          <Icon size={20} className={colors.text} />
-
-                          <div className
-                              <span className="font-sp
-                              </span>
-                                <Badge
-                                  className={cn('text-
-                                  <TypeIco
-                                </
-                                  <B
-                                  
-                                )}
+                                  className={cn('text-xs', colors.bg, colors.border)}
+                                >
+                                  <TypeIcon size={12} className="mr-1" />
+                                  {event.type}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  {event.severity}
+                                </Badge>
+                              </div>
                             </div>
-                              {form
+                            <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
+                              {formatTimestamp(event.timestamp)}
+                            </span>
                           </div>
 
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {event.description}
                           </p>
-                          {isExpanded && event.
-                              
 
-                              {event.metadata.oldScore !== u
-                                  <span className="text-muted-foreground">Score:</span>
-                                  {event.metadata.newScore > event.metadata.oldScore ? (
-                                  ) : (
-                                  )}
-                              
-                                      ? 'text-green-400'
-                                  )}>
-                                  </span>
-                                    {event.metadata.newScore > event.metadata.oldScore ? '+' :
-                                  </Badge>
-                              )}
-                              {event.me
-                                  <span className="text-muted-foreground">Duration:</span>
-                                </di
-
-                                <div className="flex items
-                                  <Badge variant="secondary" className="neon-border-y
-                                  </Badge>
-                              ) : null}
-                              {event.
-                                  <span className="text-muted
-                                    {even
-                                </div>
-
-                                {Object.entries(event.metadata)
-                                  .map(([k
-                                      
-                                
-
-                                    </div>
+                          {isExpanded && event.metadata && (
+                            <div className="mt-3 space-y-2 pt-3 border-t border-border">
+                              <div className="text-xs text-muted-foreground font-mono">
+                                {formatFullTimestamp(event.timestamp)}
                               </div>
+
+                              {typeof event.metadata.oldScore === 'number' && typeof event.metadata.newScore === 'number' && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <span className="text-muted-foreground">Score:</span>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      'font-mono',
+                                      event.metadata.newScore > event.metadata.oldScore
+                                        ? 'text-green-400'
+                                        : 'text-red-400'
+                                    )}
+                                  >
+                                    <span className="opacity-60">{event.metadata.oldScore}</span>
+                                    <span className="mx-1">→</span>
+                                    <span>{event.metadata.newScore}</span>
+                                    <span className="ml-1">
+                                      {event.metadata.newScore > event.metadata.oldScore ? '+' : ''}
+                                      {event.metadata.newScore - event.metadata.oldScore}
+                                    </span>
+                                  </Badge>
+                                </div>
+                              )}
+
+                              {typeof event.metadata.duration === 'number' && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <span className="text-muted-foreground">Duration:</span>
+                                  <Badge variant="secondary" className="neon-border-yellow font-mono">
+                                    {event.metadata.duration}ms
+                                  </Badge>
+                                </div>
+                              )}
+
+                              {typeof event.metadata.framework === 'string' && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <span className="text-muted-foreground">Framework:</span>
+                                  <Badge variant="secondary">{event.metadata.framework}</Badge>
+                                </div>
+                              )}
+
+                              {Object.entries(event.metadata)
+                                .filter(([key]) => !['oldScore', 'newScore', 'duration', 'framework'].includes(key))
+                                .map(([key, value]) => (
+                                  <div key={key} className="flex items-center gap-2 text-sm">
+                                    <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}:</span>
+                                    <span className="font-mono text-xs">{String(JSON.stringify(value))}</span>
+                                  </div>
+                                ))}
+                            </div>
                           )}
+                        </div>
                       </div>
+                    </div>
                   </div>
+                )
               })}
-
+            </div>
+          )}
+        </div>
       </ScrollArea>
+    </div>
   )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
