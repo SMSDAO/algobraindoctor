@@ -6,9 +6,10 @@ import {
 } from '@/components/ui/dialog'
 import { Repository, TimelineEvent } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
-import { Pulse, ChartLine, TrendUp, ClockCounterClockwise } from '@phosphor-icons/react'
+import { Pulse, ChartLine, TrendUp, ClockCounterClockwise, ChartLineUp } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { HealthTimeline } from '@/components/HealthTimeline'
+import { HealthTrendCharts } from '@/components/HealthTrendCharts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface VitalsModalProps {
@@ -59,14 +60,18 @@ export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: V
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">
               <Pulse size={16} className="mr-1.5" />
               Overview
             </TabsTrigger>
+            <TabsTrigger value="charts">
+              <ChartLineUp size={16} className="mr-1.5" />
+              Trends
+            </TabsTrigger>
             <TabsTrigger value="timeline">
               <ClockCounterClockwise size={16} className="mr-1.5" />
-              Health Timeline
+              Timeline
             </TabsTrigger>
           </TabsList>
 
@@ -141,6 +146,13 @@ export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: V
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="charts" className="flex-1 overflow-y-auto py-4">
+            <HealthTrendCharts 
+              events={timelineEvents}
+              repo={repo}
+            />
           </TabsContent>
 
           <TabsContent value="timeline" className="flex-1 overflow-hidden py-4">

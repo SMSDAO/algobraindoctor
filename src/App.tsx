@@ -11,6 +11,7 @@ import { SmartBrainTerminal } from '@/components/SmartBrainTerminal'
 import { VitalsModal } from '@/components/VitalsModal'
 import { HealdecModal } from '@/components/HealdecModal'
 import { ClaimModal } from '@/components/ClaimModal'
+import { FleetHealthCharts } from '@/components/FleetHealthCharts'
 import {
   Brain,
   GitBranch,
@@ -20,6 +21,7 @@ import {
   Plus,
   MagnifyingGlass,
   Database,
+  ChartLineUp,
 } from '@phosphor-icons/react'
 import {
   Repository,
@@ -329,8 +331,12 @@ function App() {
           </div>
 
           <div className="lg:col-span-6 space-y-6">
-            <Tabs defaultValue="workers" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+            <Tabs defaultValue="analytics" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="analytics">
+                  <ChartLineUp size={16} className="mr-1.5" />
+                  Analytics
+                </TabsTrigger>
                 <TabsTrigger value="workers">
                   <Gear size={16} className="mr-1.5" />
                   Workers
@@ -344,6 +350,16 @@ function App() {
                   Claims
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="analytics" className="space-y-4 mt-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-space font-semibold">Fleet Health Analytics</h3>
+                  <Badge variant="outline" className="text-xs">
+                    Real-time metrics
+                  </Badge>
+                </div>
+                <FleetHealthCharts repositories={repositories || []} workers={workers || []} />
+              </TabsContent>
 
               <TabsContent value="workers" className="space-y-4 mt-4">
                 <div className="flex items-center justify-between">

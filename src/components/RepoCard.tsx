@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Pulse, GitBranch, IdentificationCard } from '@phosphor-icons/react'
 import { Repository } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { HealthSparkline } from '@/components/HealthSparkline'
 
 interface RepoCardProps {
   repo: Repository
@@ -35,19 +36,22 @@ export function RepoCard({ repo, onClick, selected }: RepoCardProps) {
       onClick={onClick}
     >
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <GitBranch size={20} className="text-muted-foreground" />
-            <CardTitle className="text-lg font-space">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <GitBranch size={20} className="text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-lg font-space truncate">
               {repo.owner}/{repo.name}
             </CardTitle>
           </div>
-          <Badge
-            variant="outline"
-            className={cn('font-mono text-xs', healthColor, glowClass)}
-          >
-            {repo.healthScore}
-          </Badge>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <HealthSparkline currentScore={repo.healthScore} className="w-16 h-8" />
+            <Badge
+              variant="outline"
+              className={cn('font-mono text-xs', healthColor, glowClass)}
+            >
+              {repo.healthScore}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
