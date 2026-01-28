@@ -19,7 +19,7 @@ import {
   IdentificationCard,
   Plus,
   MagnifyingGlass,
-  User,
+  Database,
 } from '@phosphor-icons/react'
 import {
   Repository,
@@ -28,9 +28,12 @@ import {
   HealdecLogEntry,
   RoleType,
   WorkerType,
+  TimelineEvent,
 } from '@/lib/types'
 import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { generateSeedData } from '@/lib/seedData'
 
 function App() {
   const [selectedRole, setSelectedRole] = useKV<RoleType>('selected-role', 'admin')
@@ -38,12 +41,131 @@ function App() {
   const [workers, setWorkers] = useKV<Worker[]>('workers', [])
   const [logs, setLogs] = useKV<LogEntry[]>('logs', [])
   const [healdecLogs, setHealdecLogs] = useKV<HealdecLogEntry[]>('healdec-logs', [])
+  const [timelineEvents, setTimelineEvents] = useKV<TimelineEvent[]>('timeline-events', [])
   
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null)
   const [vitalsModalOpen, setVitalsModalOpen] = useState(false)
   const [healdecModalOpen, setHealdecModalOpen] = useState(false)
   const [claimModalOpen, setClaimModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    if ((timelineEvents || []).length === 0 && (repositories || []).length > 0) {
+      const mockEvents: TimelineEvent[] = []
+      const now = Date.now()
+      const repos = repositories || []
+      
+      repos.forEach((repo, repoIndex) => {
+        const eventCount = 8 + Math.floor(Math.random() * 12)
+        
+        for (let i = 0; i < eventCount; i++) {
+          const hoursAgo = Math.random() * 168
+          const timestamp = new Date(now - hoursAgo * 3600000).toISOString()
+          
+          const eventTypes = [
+            {
+              type: 'scan' as const,
+              severity: 'success' as const,
+              title: 'Full scan completed',
+              description: `Indexed ${Math.floor(Math.random() * 500 + 100)} commits and ${Math.floor(Math.random() * 50 + 10)} PRs`,
+              workerType: 'index' as WorkerType,
+              metadata: {
+                duration: Math.floor(Math.random() * 5000 + 1000),
+                oldScore: repo.healthScore - Math.floor(Math.random() * 10),
+                newScore: repo.healthScore,
+              },
+            },
+            {
+              type: 'governance' as const,
+              severity: 'warning' as const,
+              title: 'Governance threshold breach detected',
+              description: 'Repository activity below minimum threshold for 48 hours',
+              workerType: 'audit' as WorkerType,
+              metadata: {
+                threshold: 75,
+                actual: 68,
+              },
+            },
+            {
+              type: 'scan' as const,
+              severity: 'info' as const,
+              title: 'Framework detected',
+              description: 'Automatically detected and indexed new framework',
+              workerType: 'index' as WorkerType,
+              metadata: {
+                framework: repo.frameworks[Math.floor(Math.random() * repo.frameworks.length)] || 'React',
+              },
+            },
+            {
+              type: 'healing' as const,
+              severity: 'success' as const,
+              title: 'Auto-healing completed',
+              description: 'Repaired stale index records and recomputed scores',
+              workerType: 'repair' as WorkerType,
+              metadata: {
+                recordsRepaired: Math.floor(Math.random() * 20 + 5),
+                duration: Math.floor(Math.random() * 2000 + 500),
+              },
+            },
+            {
+              type: 'scan' as const,
+              severity: 'error' as const,
+              title: 'Vulnerability scan found issues',
+              description: 'Security vulnerabilities detected in dependencies',
+              workerType: 'audit' as WorkerType,
+              metadata: {
+                issueCount: Math.floor(Math.random() * 5 + 1),
+                severity: 'medium',
+              },
+            },
+            {
+              type: 'governance' as const,
+              severity: 'success' as const,
+              title: 'Identity claim verified',
+              description: 'New maintainer claim verified and linked',
+              workerType: 'identity' as WorkerType,
+              metadata: {
+                claimType: 'maintainer',
+                handle: `user-${Math.floor(Math.random() * 1000)}`,
+              },
+            },
+            {
+              type: 'scan' as const,
+              severity: 'success' as const,
+              title: 'Score updated',
+              description: 'Governance health score improved after recent activity',
+              workerType: 'score' as WorkerType,
+              metadata: {
+                oldScore: repo.governanceScore - Math.floor(Math.random() * 15),
+                newScore: repo.governanceScore,
+              },
+            },
+            {
+              type: 'healing' as const,
+              severity: 'warning' as const,
+              title: 'Health degradation detected',
+              description: 'Multiple failed CI runs detected, triggering monitoring',
+              workerType: 'alert' as WorkerType,
+              metadata: {
+                failedRuns: Math.floor(Math.random() * 5 + 3),
+              },
+            },
+          ]
+          
+          const eventTemplate = eventTypes[Math.floor(Math.random() * eventTypes.length)]
+          
+          mockEvents.push({
+            id: `event-${repoIndex}-${i}-${Date.now()}`,
+            repoId: repo.id,
+            timestamp,
+            ...eventTemplate,
+          })
+        }
+      })
+      
+      setTimelineEvents(mockEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()))
+    }
+  }, [repositories, timelineEvents, setTimelineEvents])
 
   const filteredRepos = (repositories || []).filter(
     (repo) =>
@@ -54,6 +176,21 @@ function App() {
   const handleRepoClick = (repo: Repository) => {
     setSelectedRepo(repo)
     setVitalsModalOpen(true)
+  }
+
+  const selectedRepoEvents = selectedRepo
+    ? (timelineEvents || []).filter((event) => event.repoId === selectedRepo.id)
+    : []
+
+  const handleSeedData = () => {
+    const seedData = generateSeedData()
+    setRepositories(seedData.repositories)
+    setWorkers(seedData.workers)
+    setHealdecLogs(seedData.healdecLogs)
+    setLogs(seedData.logs)
+    toast.success('Sample data loaded successfully!', {
+      description: `${seedData.repositories.length} repos, ${seedData.workers.length} workers, and system logs initialized.`,
+    })
   }
 
   const handleClaimSubmit = (claim: {
@@ -151,14 +288,35 @@ function App() {
             </div>
 
             <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
-              {filteredRepos.map((repo) => (
-                <RepoCard
-                  key={repo.id}
-                  repo={repo}
-                  onClick={() => handleRepoClick(repo)}
-                  selected={selectedRepo?.id === repo.id}
-                />
-              ))}
+              {filteredRepos.length === 0 && (repositories || []).length === 0 ? (
+                <div className="py-12 text-center space-y-4">
+                  <Database size={48} className="mx-auto text-muted-foreground opacity-50" />
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">No repositories indexed yet</p>
+                    <Button
+                      size="sm"
+                      onClick={handleSeedData}
+                      className="neon-border-violet glow-violet"
+                    >
+                      <Database size={16} className="mr-1.5" />
+                      Load Sample Data
+                    </Button>
+                  </div>
+                </div>
+              ) : filteredRepos.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground text-sm">
+                  No repositories match your search
+                </div>
+              ) : (
+                filteredRepos.map((repo) => (
+                  <RepoCard
+                    key={repo.id}
+                    repo={repo}
+                    onClick={() => handleRepoClick(repo)}
+                    selected={selectedRepo?.id === repo.id}
+                  />
+                ))
+              )}
             </div>
 
             <Button
@@ -264,6 +422,7 @@ function App() {
         open={vitalsModalOpen}
         onOpenChange={setVitalsModalOpen}
         repo={selectedRepo}
+        timelineEvents={selectedRepoEvents}
       />
       <HealdecModal
         open={healdecModalOpen}

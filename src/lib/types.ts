@@ -101,12 +101,63 @@ export interface Score {
   trend?: 'up' | 'down' | 'stable'
 }
 
+export type ScanEventType =
+  | 'scan_started'
+  | 'scan_completed'
+  | 'scan_failed'
+  | 'repair_applied'
+  | 'score_updated'
+  | 'claim_verified'
+  | 'claim_rejected'
+  | 'governance_change'
+  | 'framework_detected'
+  | 'vulnerability_found'
+  | 'dependency_updated'
+  | 'health_improved'
+  | 'health_degraded'
+
 export interface ScanEvent {
   id: string
   repoId: string
-  eventType: string
+  eventType: ScanEventType
   timestamp: string
-  details?: Record<string, unknown>
+  workerType?: WorkerType
+  severity: 'info' | 'warning' | 'error' | 'success'
+  title: string
+  description: string
+  metadata?: {
+    oldScore?: number
+    newScore?: number
+    duration?: number
+    framework?: string
+    claimType?: string
+    issueCount?: number
+    [key: string]: unknown
+  }
+}
+
+export interface GovernanceEvent {
+  id: string
+  repoId: string
+  eventType: 'policy_change' | 'approval_required' | 'threshold_breach' | 'audit_triggered'
+  timestamp: string
+  severity: 'info' | 'warning' | 'critical'
+  title: string
+  description: string
+  actionRequired: boolean
+  metadata?: Record<string, unknown>
+}
+
+export interface TimelineEvent {
+  id: string
+  repoId: string
+  type: 'scan' | 'governance' | 'healing'
+  timestamp: string
+  severity: 'info' | 'warning' | 'error' | 'success' | 'critical'
+  title: string
+  description: string
+  workerType?: WorkerType
+  metadata?: Record<string, unknown>
 }
 
 export interface LogEntry {
