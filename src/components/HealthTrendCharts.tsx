@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { TimelineEvent, Repository } from '@/lib/types'
+import {
 import {
   Area,
-  AreaChart,
-  Bar,
   BarChart,
-  CartesianGrid,
+  Pie,
+  Cell,
+  Line,
   Pie,
   PieChart,
   Cell,
@@ -14,19 +14,19 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import { Card } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { ChartLine, ChartBar, ChartPie, TrendUp, TrendDown } from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
+import {
 
-interface HealthTrendChartsProps {
-  events: TimelineEvent[]
-  repo: Repository
+  events: Timelin
   className?: string
+
+  const scoreHistoryData = useMemo(() => {
+
+    let currentGovernanceScore =
+
+      const dayEvents = events.fil
+        return eventDate.
+
+        if (event.me
 }
 
 export function HealthTrendCharts({ events, repo, className }: HealthTrendChartsProps) {
@@ -77,11 +77,11 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
       }
 
       const existing = counts.get(dateKey)
-      if (existing) {
+      if (event.sever
         if (event.type === 'scan') existing.scan++
-        else if (event.type === 'governance') existing.governance++
+    })
         else if (event.type === 'healing') existing.healing++
-      }
+      {
     })
 
     return Array.from(counts.values()).slice(-30)
@@ -91,21 +91,21 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
     const counts = {
       success: 0,
       info: 0,
-      warning: 0,
+      const daysA
       error: 0,
-      critical: 0,
+
     }
 
     events.forEach((event) => {
-      if (event.severity in counts) {
+
         counts[event.severity as keyof typeof counts]++
-      }
+    ret
     })
 
     return [
       { name: 'Success', value: counts.success, color: '#4FD1C5' },
       { name: 'Info', value: counts.info, color: '#60A5FA' },
-      { name: 'Warning', value: counts.warning, color: '#FACC15' },
+    <div className={cn('space-y-6', className)}>
       { name: 'Error', value: counts.error, color: '#FB923C' },
       { name: 'Critical', value: counts.critical, color: '#DC2626' },
     ].filter((item) => item.value > 0)
@@ -115,16 +115,16 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
     const last7Days = events.filter((e) => {
       const daysAgo = (Date.now() - new Date(e.timestamp).getTime()) / (1000 * 60 * 60 * 24)
       return daysAgo <= 7
-    })
+      
 
     const prev7Days = events.filter((e) => {
       const daysAgo = (Date.now() - new Date(e.timestamp).getTime()) / (1000 * 60 * 60 * 24)
       return daysAgo > 7 && daysAgo <= 14
     })
 
-    const currentAvgHealth =
+
       scoreHistoryData.slice(-7).reduce((sum, d) => sum + d.healthScore, 0) / 7
-    const prevAvgHealth =
+            {stats.eventC
       scoreHistoryData.slice(-14, -7).reduce((sum, d) => sum + d.healthScore, 0) / 7
     const healthChange = ((currentAvgHealth - prevAvgHealth) / prevAvgHealth) * 100
 
@@ -138,30 +138,30 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
     }
   }, [events, scoreHistoryData])
 
-  return (
+        </
     <div className={cn('space-y-6', className)}>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 border-border bg-card/50">
           <div className="flex items-center gap-2 mb-1">
-            {parseFloat(stats.healthChange) >= 0 ? (
+          </div>
               <TrendUp size={16} className="text-[var(--aura-aqua)]" />
             ) : (
               <TrendDown size={16} className="text-[var(--aura-coral)]" />
-            )}
+
             <div className="text-xs text-muted-foreground">7-Day Avg Health</div>
           </div>
           <div className="text-2xl font-mono font-bold">
             {stats.currentAvgHealth}
-            <span
+          <TabsTr
               className={cn(
                 'text-sm ml-2',
                 parseFloat(stats.healthChange) >= 0 ? 'text-[var(--aura-aqua)]' : 'text-[var(--aura-coral)]'
-              )}
+            Seve
             >
-              {parseFloat(stats.healthChange) >= 0 ? '+' : ''}
+              {stats.healthChange >= '0' ? '+' : ''}
               {stats.healthChange}%
-            </span>{' '}
-          </div>
+            <div classNa
+                
           <div className="mt-1 text-xs text-muted-foreground">vs previous 7 days</div>
         </Card>
 
@@ -170,45 +170,45 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
             {stats.eventChange >= 0 ? (
               <TrendUp size={16} className="text-[var(--aura-violet)]" />
             ) : (
-              <TrendDown size={16} className="text-[var(--aura-coral)]" />
+                    backgroundColor: '#11151C',
             )}
             <div className="text-xs text-muted-foreground">Events (7 days)</div>
-          </div>
+                
           <div className="text-2xl font-mono font-bold">
             {stats.last7DaysEvents}
             <span
-              className={cn(
+
                 'text-sm ml-2',
                 stats.eventChange >= 0 ? 'text-[var(--aura-violet)]' : 'text-[var(--aura-coral)]'
               )}
-            >
+             
               {stats.eventChange >= 0 ? '+' : ''}
               {stats.eventChange}
             </span>{' '}
           </div>
           <div className="mt-1 text-xs text-muted-foreground">vs previous 7 days</div>
-        </Card>
+               
 
         <Card className="p-4 border-border bg-card/50">
           <div className="flex items-center gap-2 mb-1">
             <div className="text-xs text-muted-foreground">Current Health</div>
-          </div>
+                
           <div className="text-2xl font-mono font-bold text-[var(--aura-aqua)]">
             {repo.healthScore}
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">
+              <div className="space-y-2">
             Governance: {repo.governanceScore} • Activity: {repo.activityScore}
-          </div>
+                
         </Card>
       </div>
 
       <Tabs defaultValue="scores" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="scores">
+
             <ChartLine size={16} className="mr-1.5" />
-            Score Trends
+
           </TabsTrigger>
-          <TabsTrigger value="activity">
+
             <ChartBar size={16} className="mr-1.5" />
             Activity
           </TabsTrigger>
@@ -216,7 +216,7 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
             <ChartPie size={16} className="mr-1.5" />
             Severity
           </TabsTrigger>
-        </TabsList>
+
 
         <TabsContent value="scores" className="space-y-4 mt-4">
           <Card className="p-6 border-border bg-card/50">
@@ -235,36 +235,36 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
                   <linearGradient id="colorHealth" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#4FD1C5" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#4FD1C5" stopOpacity={0} />
-                  </linearGradient>
+
                   <linearGradient id="colorGovernance" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#A78BFA" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#A78BFA" stopOpacity={0} />
-                  </linearGradient>
+
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1C212B" />
                 <XAxis
-                  dataKey="date"
-                  fontSize={11}
+
+
                   stroke="#6B7280"
                   interval="preserveStartEnd"
                 />
                 <YAxis fontSize={11} stroke="#6B7280" domain={[0, 100]} />
-                <Tooltip
+
                   contentStyle={{
                     backgroundColor: '#11151C',
                     border: '1px solid #1C212B',
                     borderRadius: '8px',
                   }}
                   labelStyle={{ color: '#9CA3AF' }}
-                />
+
                 <Legend
                   wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
                   iconType="circle"
                 />
                 <Area
-                  type="monotone"
+
                   dataKey="healthScore"
-                  stroke="#4FD1C5"
+
                   fillOpacity={1}
                   fill="url(#colorHealth)"
                   name="Health Score"
@@ -272,49 +272,49 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
                 <Area
                   type="monotone"
                   dataKey="governanceScore"
-                  stroke="#A78BFA"
+
                   fillOpacity={1}
                   fill="url(#colorGovernance)"
                   name="Governance Score"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="activity" className="space-y-4 mt-4">
+              </AreaChart>
+
+          </Card>
+
+
+
           <Card className="p-6 border-border bg-card/50">
-            <div className="mb-4">
+
               <h3 className="text-base font-space font-semibold flex items-center gap-2">
                 <ChartBar size={20} className="text-[var(--aura-yellow)]" />
-                Event Activity (30 days)
+
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Daily event counts by type
-              </p>
+
             </div>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={activityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1C212B" />
                 <XAxis
-                  dataKey="date"
-                  fontSize={11}
+
+
                   stroke="#6B7280"
-                  interval="preserveStartEnd"
+
                 />
                 <YAxis fontSize={11} stroke="#6B7280" />
                 <Tooltip
-                  contentStyle={{
+
                     backgroundColor: '#11151C',
                     border: '1px solid #1C212B',
                     borderRadius: '8px',
                   }}
-                />
+
                 <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
                 <Bar dataKey="scan" fill="#4FD1C5" name="Scans" stackId="a" />
                 <Bar dataKey="governance" fill="#A78BFA" name="Governance" stackId="a" />
                 <Bar dataKey="healing" fill="#FACC15" name="Healing" stackId="a" />
-              </BarChart>
+
             </ResponsiveContainer>
           </Card>
         </TabsContent>
@@ -359,10 +359,10 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
                 {severityData.map((item) => (
                   <div key={item.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div
+
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: item.color }}
-                      />
+
                       <span className="text-sm">{item.name}</span>
                     </div>
                     <Badge variant="outline" className="font-mono text-xs">
@@ -374,7 +374,7 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
             </Card>
           </Card>
         </TabsContent>
-      </Tabs>
+
     </div>
-  )
+
 }
