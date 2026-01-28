@@ -41,6 +41,22 @@ export function HealthTimeline({ events, className, maxHeight = '600px' }: Healt
     .filter((event) => severityFilter === 'all' || event.severity === severityFilter)
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
+  const eventStats = {
+    total: filteredEvents.length,
+    byType: {
+      scan: filteredEvents.filter(e => e.type === 'scan').length,
+      governance: filteredEvents.filter(e => e.type === 'governance').length,
+      healing: filteredEvents.filter(e => e.type === 'healing').length,
+    },
+    bySeverity: {
+      success: filteredEvents.filter(e => e.severity === 'success').length,
+      info: filteredEvents.filter(e => e.severity === 'info').length,
+      warning: filteredEvents.filter(e => e.severity === 'warning').length,
+      error: filteredEvents.filter(e => e.severity === 'error').length,
+      critical: filteredEvents.filter(e => e.severity === 'critical').length,
+    },
+  }
+
   const getEventIcon = (event: TimelineEvent) => {
     switch (event.severity) {
       case 'success':
@@ -123,42 +139,70 @@ export function HealthTimeline({ events, className, maxHeight = '600px' }: Healt
   }
 
   const handleExport = () => {
-    const exportData = {
-      exportDate: new Date().toISOString(),
-      totalEvents: filteredEvents.length,
-      filters: {
-        type: filter,
-        severity: severityFilter,
-      },
-      events: filteredEvents,
+    try {
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        totalEvents: filteredEvents.length,
+        filters: {
+          type: filter,
+          severity: severityFilter,
+        },
+        events: filteredEvents,
+      }
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: 'application/json',
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `health-timeline-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      toast.success('Timeline exported', {
+        description: `${filteredEvents.length} events exported to JSON`,
+      })
+    } catch (error) {
+      toast.error('Export failed', {
+        description: 'Could not export timeline data',
+      })
+      console.error('Export error:', error)
     }
-    
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: 'application/json',
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `health-timeline-${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    
-    toast.success('Timeline exported', {
-      description: `${filteredEvents.length} events exported to JSON`,
-    })
   }
 
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex items-center gap-4 flex-wrap mb-4">
         <div className="flex items-center gap-2">
           <CalendarBlank size={20} className="text-muted-foreground" />
           <span className="text-sm font-space font-semibold">Health Timeline</span>
           <Badge variant="outline" className="font-mono text-xs">
             {filteredEvents.length} events
           </Badge>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {eventStats.byType.scan > 0 && (
+            <Badge variant="outline" className="text-xs neon-border-aqua">
+              <Pulse size={12} className="mr-1" />
+              {eventStats.byType.scan} scans
+            </Badge>
+          )}
+          {eventStats.byType.governance > 0 && (
+            <Badge variant="outline" className="text-xs neon-border-violet">
+              <ShieldCheck size={12} className="mr-1" />
+              {eventStats.byType.governance} governance
+            </Badge>
+          )}
+          {eventStats.byType.healing > 0 && (
+            <Badge variant="outline" className="text-xs neon-border-yellow">
+              <Wrench size={12} className="mr-1" />
+              {eventStats.byType.healing} healing
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
