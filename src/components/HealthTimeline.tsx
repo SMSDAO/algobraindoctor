@@ -1,28 +1,27 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scr
+import { Select, SelectContent, SelectItem, SelectTrigge
+  Warning,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Warning,
   Info,
-  CheckCircle,
-  XCircle,
-  Download,
-  ShieldCheck,
   GitBranch,
-  Calendar,
-} from '@phosphor-icons/react'
-import { TimelineEvent } from '@/lib/types'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+} from '@p
+import { cn
 
-interface HealthTimelineProps {
-  events: TimelineEvent[]
-  maxHeight?: string
+  events: Ti
+}
+export function HealthTimeline
+  const [filter, setFilter] = useState<stri
+  const filteredEvents = events.
+    return event.type === filt
+
+    switch (severity) {
+        return CheckCircl
 }
 
-export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelineProps) {
+export function HealthTimeline({ events }: HealthTimelineProps) {
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null)
   const [filter, setFilter] = useState<string>('all')
 
@@ -38,7 +37,7 @@ export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelinePr
       case 'warning':
       case 'critical':
         return Warning
-      case 'error':
+      case 'warning
         return XCircle
       case 'info':
       default:
@@ -65,20 +64,20 @@ export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelinePr
         return {
           bg: 'bg-[var(--aura-coral)]/10',
           border: 'neon-border-coral',
-          text: 'text-[var(--aura-coral)]',
-        }
+      case 'governance':
+      def
       case 'info':
       default:
-        return {
+
           bg: 'bg-[var(--aura-blue)]/10',
           border: 'neon-border-blue',
           text: 'text-[var(--aura-blue)]',
         }
-    }
+
   }
 
   const getTypeIcon = (type: TimelineEvent['type']) => {
-    switch (type) {
+  }
       case 'scan':
         return GitBranch
       case 'healing':
@@ -102,30 +101,30 @@ export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelinePr
     if (diffMins < 60) return `${diffMins}m ago`
     if (diffHours < 24) return `${diffHours}h ago`
     if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString()
+            size="sm"
   }
 
   const handleExport = () => {
-    try {
+         
       const exportData = {
         exportDate: new Date().toISOString(),
         events: filteredEvents,
-        filter: {
+              <Se
           type: filter,
-        },
-      }
+          
+       
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       a.download = `timeline-export-${Date.now()}.json`
-      a.click()
+            fil
       URL.revokeObjectURL(url)
       toast.success('Timeline exported successfully')
     } catch (error) {
       toast.error('Failed to export timeline')
     }
-  }
+   
 
   return (
     <div className="space-y-4">
@@ -135,11 +134,11 @@ export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelinePr
           <h3 className="text-base font-space font-semibold">Activity Timeline</h3>
           <Badge variant="outline" className="text-xs">
             {filteredEvents.length} events
-          </Badge>
+                  
         </div>
         <div className="flex items-center gap-2">
           <Button
-            size="sm"
+                     
             variant="outline"
             onClick={handleExport}
             disabled={filteredEvents.length === 0}
@@ -150,18 +149,18 @@ export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelinePr
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-32">
               <SelectValue />
-            </SelectTrigger>
+                            
             <SelectContent>
               <SelectItem value="all">All Events</SelectItem>
               <SelectItem value="scan">Scans</SelectItem>
               <SelectItem value="healing">Healing</SelectItem>
               <SelectItem value="governance">Governance</SelectItem>
             </SelectContent>
-          </Select>
+                   
         </div>
-      </div>
+            
 
-      <ScrollArea className="pr-4" style={{ height: maxHeight }}>
+      <ScrollArea className="h-[500px] pr-4">
         <div className="space-y-3">
           {filteredEvents.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground text-sm">
@@ -203,7 +202,7 @@ export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelinePr
                               {event.severity}
                             </Badge>
                           )}
-                        </div>
+
                         <span className="text-xs text-muted-foreground font-mono flex-shrink-0">
                           {formatRelativeTime(event.timestamp)}
                         </span>
@@ -233,17 +232,17 @@ export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelinePr
                                   <div className="col-span-2 flex items-center gap-2 mt-1">
                                     <span className="text-muted-foreground">Score:</span>
                                     <span className="text-foreground">
-                                      {String(event.metadata.oldScore)}
+                                      {event.metadata.oldScore}
                                     </span>
                                     <span className="text-muted-foreground">→</span>
                                     <span className={cn('font-semibold', colors.text)}>
-                                      {String(event.metadata.newScore)}
+                                      {event.metadata.newScore}
                                     </span>
                                   </div>
                                 )}
                             </div>
                           </div>
-                        </div>
+
                       )}
                     </div>
                   </div>
@@ -251,8 +250,8 @@ export function HealthTimeline({ events, maxHeight = '500px' }: HealthTimelinePr
               )
             })
           )}
-        </div>
+
       </ScrollArea>
-    </div>
+
   )
-}
+
