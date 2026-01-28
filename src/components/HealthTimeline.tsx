@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { TimelineEvent, WorkerType } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/butto
+import {
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
@@ -14,22 +14,22 @@ import {
   GitBranch,
   Key,
   Wrench,
-  ChartLine,
-  Bug,
-  ArrowUp,
-  ArrowDown,
   Gear,
-  CalendarBlank,
-  DownloadSimple,
-} from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+  Down
+import { c
 
-interface HealthTimelineProps {
-  events: TimelineEvent[]
-  className?: string
-  maxHeight?: string
-}
+  event
+  maxHeight?: st
+
+  const [filter, setFilter] = 
+  const [expandedEvent, setExpan
+  const filteredEvents = event
+
+
+    total: filteredEvents
+      scan: filtered
+      healing: filte
+ 
 
 export function HealthTimeline({ events, className, maxHeight = '600px' }: HealthTimelineProps) {
   const [filter, setFilter] = useState<'all' | 'scan' | 'governance' | 'healing'>('all')
@@ -40,22 +40,6 @@ export function HealthTimeline({ events, className, maxHeight = '600px' }: Healt
     .filter((event) => filter === 'all' || event.type === filter)
     .filter((event) => severityFilter === 'all' || event.severity === severityFilter)
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
-  const eventStats = {
-    total: filteredEvents.length,
-    byType: {
-      scan: filteredEvents.filter(e => e.type === 'scan').length,
-      governance: filteredEvents.filter(e => e.type === 'governance').length,
-      healing: filteredEvents.filter(e => e.type === 'healing').length,
-    },
-    bySeverity: {
-      success: filteredEvents.filter(e => e.severity === 'success').length,
-      info: filteredEvents.filter(e => e.severity === 'info').length,
-      warning: filteredEvents.filter(e => e.severity === 'warning').length,
-      error: filteredEvents.filter(e => e.severity === 'error').length,
-      critical: filteredEvents.filter(e => e.severity === 'critical').length,
-    },
-  }
 
   const getEventIcon = (event: TimelineEvent) => {
     switch (event.severity) {
@@ -175,34 +159,13 @@ export function HealthTimeline({ events, className, maxHeight = '600px' }: Healt
 
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="flex items-center gap-4 flex-wrap mb-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           <CalendarBlank size={20} className="text-muted-foreground" />
           <span className="text-sm font-space font-semibold">Health Timeline</span>
           <Badge variant="outline" className="font-mono text-xs">
             {filteredEvents.length} events
           </Badge>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {eventStats.byType.scan > 0 && (
-            <Badge variant="outline" className="text-xs neon-border-aqua">
-              <Pulse size={12} className="mr-1" />
-              {eventStats.byType.scan} scans
-            </Badge>
-          )}
-          {eventStats.byType.governance > 0 && (
-            <Badge variant="outline" className="text-xs neon-border-violet">
-              <ShieldCheck size={12} className="mr-1" />
-              {eventStats.byType.governance} governance
-            </Badge>
-          )}
-          {eventStats.byType.healing > 0 && (
-            <Badge variant="outline" className="text-xs neon-border-yellow">
-              <Wrench size={12} className="mr-1" />
-              {eventStats.byType.healing} healing
-            </Badge>
-          )}
         </div>
 
         <div className="flex items-center gap-2 ml-auto">
@@ -299,109 +262,109 @@ export function HealthTimeline({ events, className, maxHeight = '600px' }: Healt
                               <div className="flex items-center gap-1.5">
                                 <Badge
                                   variant="outline"
-                                  className={cn('text-xs', colors.text)}
-                                >
-                                  <TypeIcon size={12} className="mr-1" />
-                                  {event.type}
-                                </Badge>
-                                {event.workerType && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <Gear size={12} className="mr-1" />
-                                    {event.workerType}
-                                  </Badge>
+                            colors.bg,
+                          )}
+                          <Icon size={20} className={colors.text} />
+
+                          <div className
+                              <span className="font-sp
+                              </span>
+                                <Badge
+                                  className={cn('text-
+                                  <TypeIco
+                                </
+                                  <B
+                                  
                                 )}
-                              </div>
                             </div>
-                            <span className="text-xs text-muted-foreground font-mono flex-shrink-0">
-                              {formatTimestamp(event.timestamp)}
-                            </span>
+                              {form
                           </div>
 
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {event.description}
                           </p>
-
-                          {isExpanded && event.metadata && (
-                            <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-                              <div className="text-xs text-muted-foreground font-mono mb-2">
-                                {formatFullTimestamp(event.timestamp)}
-                              </div>
+                          {isExpanded && event.
                               
-                              {event.metadata.oldScore !== undefined && event.metadata.newScore !== undefined && typeof event.metadata.oldScore === 'number' && typeof event.metadata.newScore === 'number' && (
-                                <div className="flex items-center gap-2 text-sm">
+
+                              {event.metadata.oldScore !== u
                                   <span className="text-muted-foreground">Score:</span>
-                                  <span className="font-mono">{event.metadata.oldScore}</span>
                                   {event.metadata.newScore > event.metadata.oldScore ? (
-                                    <ArrowUp size={16} className="text-green-400" />
                                   ) : (
-                                    <ArrowDown size={16} className="text-[var(--aura-coral)]" />
                                   )}
-                                  <span className={cn(
-                                    'font-mono font-bold',
-                                    event.metadata.newScore > event.metadata.oldScore
+                              
                                       ? 'text-green-400'
-                                      : 'text-[var(--aura-coral)]'
                                   )}>
-                                    {event.metadata.newScore}
                                   </span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {event.metadata.newScore > event.metadata.oldScore ? '+' : ''}
-                                    {((event.metadata.newScore - event.metadata.oldScore) / event.metadata.oldScore * 100).toFixed(1)}%
+                                    {event.metadata.newScore > event.metadata.oldScore ? '+' :
                                   </Badge>
-                                </div>
                               )}
-
-                              {event.metadata.duration && typeof event.metadata.duration === 'number' ? (
-                                <div className="flex items-center gap-2 text-sm">
+                              {event.me
                                   <span className="text-muted-foreground">Duration:</span>
-                                  <span className="font-mono">{event.metadata.duration}ms</span>
-                                </div>
-                              ) : null}
+                                </di
 
-                              {event.metadata.framework && typeof event.metadata.framework === 'string' ? (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <span className="text-muted-foreground">Framework:</span>
-                                  <Badge variant="secondary" className="neon-border-yellow">
-                                    {event.metadata.framework}
+                                <div className="flex items
+                                  <Badge variant="secondary" className="neon-border-y
                                   </Badge>
-                                </div>
                               ) : null}
-
-                              {event.metadata.issueCount !== undefined && typeof event.metadata.issueCount === 'number' && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <span className="text-muted-foreground">Issues Found:</span>
-                                  <Badge variant="destructive" className="font-mono">
-                                    {event.metadata.issueCount}
-                                  </Badge>
+                              {event.
+                                  <span className="text-muted
+                                    {even
                                 </div>
-                              )}
 
-                              <div className="space-y-2">
                                 {Object.entries(event.metadata)
-                                  .filter(([key]) => !['oldScore', 'newScore', 'duration', 'framework', 'issueCount'].includes(key))
-                                  .map(([key, value]) => (
-                                    <div key={key} className="flex items-start gap-2 text-sm">
-                                      <span className="text-muted-foreground capitalize">
-                                        {key.replace(/_/g, ' ')}:
-                                      </span>
-                                      <span className="font-mono text-xs break-all">
-                                        {typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}
-                                      </span>
+                                  .map(([k
+                                      
+                                
+
                                     </div>
-                                  ))}
                               </div>
-                            </div>
                           )}
-                        </div>
                       </div>
-                    </div>
                   </div>
-                )
               })}
-            </div>
-          )}
-        </div>
+
       </ScrollArea>
-    </div>
   )
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
