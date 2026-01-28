@@ -83,10 +83,10 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 justify-between">
+    <div className="space-y-3 sm:space-y-4">
+      <div className="flex items-center gap-2 sm:gap-3 justify-between">
         <Select value={eventFilter} onValueChange={setEventFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-32 sm:w-40 text-xs sm:text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -104,15 +104,16 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
           variant="outline"
           onClick={handleExport}
           disabled={filteredEvents.length === 0}
+          className="text-xs sm:text-sm"
         >
-          <Download size={16} />
-          Export
+          <Download size={14} className="sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline ml-1.5">Export</span>
         </Button>
       </div>
 
-      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+      <div className="space-y-2 sm:space-y-3 max-h-[400px] overflow-y-auto pr-1 sm:pr-2">
         {filteredEvents.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground text-sm">
+          <div className="py-6 sm:py-8 text-center text-muted-foreground text-xs sm:text-sm">
             No events found
           </div>
         ) : (
@@ -127,44 +128,44 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
               <div
                 key={event.id}
                 className={cn(
-                  'p-4 rounded-lg border transition-all hover:scale-[1.02]',
+                  'p-3 sm:p-4 rounded-lg border transition-all hover:scale-[1.02]',
                   colors.bg,
                   colors.border,
                 )}
               >
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <div className={cn('flex-shrink-0 mt-0.5', colors.text)}>
-                    <SeverityIcon size={20} weight="duotone" />
+                    <SeverityIcon size={18} className="sm:w-5 sm:h-5" weight="duotone" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-space font-semibold text-sm">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span className="font-space font-semibold text-xs sm:text-sm">
                           {event.title}
                         </span>
                         <Badge
                           variant="outline"
-                          className={cn('text-xs capitalize', colors.text)}
+                          className={cn('text-[10px] sm:text-xs capitalize', colors.text)}
                         >
-                          <SeverityIcon size={12} className="mr-1" />
+                          <SeverityIcon size={10} className="sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                           {event.severity}
                         </Badge>
                       </div>
-                      <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground font-mono whitespace-nowrap">
                         {relativeTime}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1.5 sm:mb-2">
                       {event.description}
                     </p>
                     {event.metadata && Object.keys(event.metadata).length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
                         {Object.entries(event.metadata)
                           .filter(([key, value]) => value !== undefined && value !== null)
                           .map(([key, value]) => (
                             <div
                               key={key}
-                              className="text-xs font-mono bg-card/50 px-2 py-1 rounded border border-border"
+                              className="text-[10px] sm:text-xs font-mono bg-card/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-border"
                             >
                               <span className="text-muted-foreground">{key}:</span>{' '}
                               <span className="font-semibold">
@@ -177,8 +178,8 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
                       </div>
                     )}
                     {event.workerType && (
-                      <div className="mt-2">
-                        <Badge variant="secondary" className="text-xs font-mono">
+                      <div className="mt-1.5 sm:mt-2">
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs font-mono">
                           {event.workerType}
                         </Badge>
                       </div>

@@ -55,25 +55,25 @@ export function WorkerCard({ worker, onClick }: WorkerCardProps) {
       )}
       onClick={onClick}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2 sm:pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {worker.status === 'healthy' ? (
-              <CircleNotch size={20} className={cn(config.color, 'animate-spin')} />
+              <CircleNotch size={18} className={cn('sm:w-5 sm:h-5', config.color, 'animate-spin')} />
             ) : (
-              <Gear size={20} className={config.color} />
+              <Gear size={18} className={cn('sm:w-5 sm:h-5', config.color)} />
             )}
-            <CardTitle className="text-base font-space">
+            <CardTitle className="text-sm sm:text-base font-space">
               {WORKER_LABELS[worker.type]}
             </CardTitle>
           </div>
-          <Badge variant="outline" className={cn('text-xs uppercase', config.color)}>
+          <Badge variant="outline" className={cn('text-[10px] sm:text-xs uppercase', config.color)}>
             {worker.status}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="grid grid-cols-2 gap-3 text-xs">
+      <CardContent className="space-y-1.5 sm:space-y-2">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 text-[10px] sm:text-xs">
           <div>
             <div className="text-muted-foreground">Completed</div>
             <div className="font-mono font-medium">{worker.jobsCompleted}</div>
@@ -91,7 +91,7 @@ export function WorkerCard({ worker, onClick }: WorkerCardProps) {
             <div className="font-mono font-medium">{worker.avgDuration}ms</div>
           </div>
         </div>
-        <div className="text-xs text-muted-foreground font-mono pt-1 border-t border-border">
+        <div className="text-[10px] sm:text-xs text-muted-foreground font-mono pt-1 border-t border-border">
           Last run: {new Date(worker.lastRun).toLocaleTimeString()}
         </div>
       </CardContent>

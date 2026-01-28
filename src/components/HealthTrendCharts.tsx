@@ -133,22 +133,22 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
   }, [events, scoreHistoryData])
 
   return (
-    <div className={cn('space-y-6', className)}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 border-border bg-card/50">
-          <div className="flex items-center gap-2 mb-1">
+    <div className={cn('space-y-4 sm:space-y-6', className)}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+        <Card className="p-3 sm:p-4 border-border bg-card/50">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
             {parseFloat(stats.healthChange) >= 0 ? (
-              <TrendUp size={16} className="text-[var(--aura-aqua)]" />
+              <TrendUp size={14} className="sm:w-4 sm:h-4 text-[var(--aura-aqua)]" />
             ) : (
-              <TrendDown size={16} className="text-[var(--aura-coral)]" />
+              <TrendDown size={14} className="sm:w-4 sm:h-4 text-[var(--aura-coral)]" />
             )}
-            <div className="text-xs text-muted-foreground">7-Day Avg Health</div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground">7-Day Avg Health</div>
           </div>
-          <div className="text-2xl font-mono font-bold">
+          <div className="text-xl sm:text-2xl font-mono font-bold">
             {stats.currentAvgHealth}
             <span
               className={cn(
-                'text-sm ml-2',
+                'text-xs sm:text-sm ml-1.5 sm:ml-2',
                 parseFloat(stats.healthChange) >= 0 ? 'text-[var(--aura-aqua)]' : 'text-[var(--aura-coral)]'
               )}
             >
@@ -156,23 +156,23 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
               {stats.healthChange}%
             </span>
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">vs previous 7 days</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">vs previous 7 days</div>
         </Card>
 
-        <Card className="p-4 border-border bg-card/50">
-          <div className="flex items-center gap-2 mb-1">
+        <Card className="p-3 sm:p-4 border-border bg-card/50">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
             {stats.eventChange >= 0 ? (
-              <TrendUp size={16} className="text-[var(--aura-violet)]" />
+              <TrendUp size={14} className="sm:w-4 sm:h-4 text-[var(--aura-violet)]" />
             ) : (
-              <TrendDown size={16} className="text-[var(--aura-coral)]" />
+              <TrendDown size={14} className="sm:w-4 sm:h-4 text-[var(--aura-coral)]" />
             )}
-            <div className="text-xs text-muted-foreground">Events (7 days)</div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground">Events (7 days)</div>
           </div>
-          <div className="text-2xl font-mono font-bold">
+          <div className="text-xl sm:text-2xl font-mono font-bold">
             {stats.last7DaysEvents}
             <span
               className={cn(
-                'text-sm ml-2',
+                'text-xs sm:text-sm ml-1.5 sm:ml-2',
                 stats.eventChange >= 0 ? 'text-[var(--aura-violet)]' : 'text-[var(--aura-coral)]'
               )}
             >
@@ -180,50 +180,50 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
               {stats.eventChange}
             </span>
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">vs previous 7 days</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">vs previous 7 days</div>
         </Card>
 
-        <Card className="p-4 border-border bg-card/50">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="text-xs text-muted-foreground">Current Health</div>
+        <Card className="p-3 sm:p-4 border-border bg-card/50 col-span-1 sm:col-span-2 md:col-span-1">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+            <div className="text-[10px] sm:text-xs text-muted-foreground">Current Health</div>
           </div>
-          <div className="text-2xl font-mono font-bold text-[var(--aura-aqua)]">
+          <div className="text-xl sm:text-2xl font-mono font-bold text-[var(--aura-aqua)]">
             {repo.healthScore}
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">
             Governance: {repo.governanceScore} • Activity: {repo.activityScore}
           </div>
         </Card>
       </div>
 
       <Tabs defaultValue="scores" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="scores">
-            <ChartLine size={16} className="mr-1.5" />
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="scores" className="text-xs sm:text-sm py-2">
+            <ChartLine size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
             Scores
           </TabsTrigger>
-          <TabsTrigger value="activity">
-            <ChartBar size={16} className="mr-1.5" />
+          <TabsTrigger value="activity" className="text-xs sm:text-sm py-2">
+            <ChartBar size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
             Activity
           </TabsTrigger>
-          <TabsTrigger value="severity">
-            <ChartPie size={16} className="mr-1.5" />
+          <TabsTrigger value="severity" className="text-xs sm:text-sm py-2">
+            <ChartPie size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
             Severity
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="scores" className="space-y-4 mt-4">
-          <Card className="p-6 border-border bg-card/50">
-            <div className="mb-4">
-              <h3 className="text-base font-space font-semibold flex items-center gap-2">
-                <ChartLine size={20} className="text-[var(--aura-violet)]" />
+        <TabsContent value="scores" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
+          <Card className="p-4 sm:p-6 border-border bg-card/50">
+            <div className="mb-3 sm:mb-4">
+              <h3 className="text-sm sm:text-base font-space font-semibold flex items-center gap-2">
+                <ChartLine size={18} className="sm:w-5 sm:h-5 text-[var(--aura-violet)]" />
                 Score History (30 days)
               </h3>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                 Historical health and governance scores
               </p>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <AreaChart data={scoreHistoryData}>
                 <defs>
                   <linearGradient id="colorHealth" x1="0" y1="0" x2="0" y2="1">
@@ -276,18 +276,18 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
           </Card>
         </TabsContent>
 
-        <TabsContent value="activity" className="space-y-4 mt-4">
-          <Card className="p-6 border-border bg-card/50">
-            <div className="mb-4">
-              <h3 className="text-base font-space font-semibold flex items-center gap-2">
-                <ChartBar size={20} className="text-[var(--aura-yellow)]" />
+        <TabsContent value="activity" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
+          <Card className="p-4 sm:p-6 border-border bg-card/50">
+            <div className="mb-3 sm:mb-4">
+              <h3 className="text-sm sm:text-base font-space font-semibold flex items-center gap-2">
+                <ChartBar size={18} className="sm:w-5 sm:h-5 text-[var(--aura-yellow)]" />
                 Activity Timeline
               </h3>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                 Daily event counts by type
               </p>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <BarChart data={activityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1C212B" />
                 <XAxis
@@ -314,18 +314,18 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
           </Card>
         </TabsContent>
 
-        <TabsContent value="severity" className="space-y-4 mt-4">
-          <Card className="p-6 border-border bg-card/50">
-            <div className="mb-4">
-              <h3 className="text-base font-space font-semibold flex items-center gap-2">
-                <ChartPie size={20} className="text-[var(--aura-blue)]" />
+        <TabsContent value="severity" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
+          <Card className="p-4 sm:p-6 border-border bg-card/50">
+            <div className="mb-3 sm:mb-4">
+              <h3 className="text-sm sm:text-base font-space font-semibold flex items-center gap-2">
+                <ChartPie size={18} className="sm:w-5 sm:h-5 text-[var(--aura-blue)]" />
                 Event Severity Distribution
               </h3>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                 Breakdown of events by severity level
               </p>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <PieChart>
                 <Pie
                   data={severityData}
@@ -349,18 +349,18 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
                 />
               </PieChart>
             </ResponsiveContainer>
-            <Card className="mt-4 p-4 border-border bg-card/30">
-              <div className="space-y-2">
+            <Card className="mt-3 sm:mt-4 p-3 sm:p-4 border-border bg-card/30">
+              <div className="space-y-1.5 sm:space-y-2">
                 {severityData.map((item) => (
                   <div key={item.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-sm">{item.name}</span>
+                      <span className="text-xs sm:text-sm">{item.name}</span>
                     </div>
-                    <Badge variant="outline" className="font-mono text-xs">
+                    <Badge variant="outline" className="font-mono text-[10px] sm:text-xs">
                       {item.value}
                     </Badge>
                   </div>

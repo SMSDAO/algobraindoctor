@@ -223,33 +223,33 @@ function App() {
       <Toaster />
       
       <header className="border-b border-border bg-card/30 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Brain size={32} className="text-[var(--aura-violet)] glow-violet" />
-              <div>
-                <h1 className="text-xl font-space font-bold">AlgoBrainDoctor</h1>
-                <div className="text-xs text-muted-foreground font-mono">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Brain size={28} className="text-[var(--aura-violet)] glow-violet flex-shrink-0 sm:w-8 sm:h-8" />
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-space font-bold truncate">AlgoBrainDoctor</h1>
+                <div className="text-[10px] sm:text-xs text-muted-foreground font-mono hidden sm:block">
                   Social Index & Identity Network v0.1
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Badge variant="outline" className="glow-aqua neon-border-aqua">
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+              <div className="hidden lg:flex items-center gap-2 text-sm">
+                <Badge variant="outline" className="glow-aqua neon-border-aqua text-xs">
                   {healthyWorkers}/{(workers || []).length} Workers
                 </Badge>
-                <Badge variant="outline" className="glow-violet neon-border-violet">
+                <Badge variant="outline" className="glow-violet neon-border-violet text-xs">
                   {totalJobs} Jobs
                 </Badge>
-                <Badge variant="outline" className="glow-yellow neon-border-yellow">
+                <Badge variant="outline" className="glow-yellow neon-border-yellow text-xs">
                   Avg Health: {avgHealth}
                 </Badge>
               </div>
 
               <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as RoleType)}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -265,13 +265,14 @@ function App() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-3 space-y-4">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+          <div className="lg:col-span-3 space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-space font-semibold flex items-center gap-2">
-                <GitBranch size={20} />
-                Fleet Navigator
+              <h2 className="text-base sm:text-lg font-space font-semibold flex items-center gap-2">
+                <GitBranch size={18} className="sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Fleet Navigator</span>
+                <span className="sm:hidden">Fleet</span>
               </h2>
               <Badge className="font-mono text-xs">{(repositories || []).length}</Badge>
             </div>
@@ -285,28 +286,28 @@ function App() {
                 placeholder="Search repos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-sm"
               />
             </div>
 
-            <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+            <div className="space-y-2 max-h-[calc(100vh-300px)] lg:max-h-[calc(100vh-280px)] overflow-y-auto">
               {filteredRepos.length === 0 && (repositories || []).length === 0 ? (
-                <div className="py-12 text-center space-y-4">
-                  <Database size={48} className="mx-auto text-muted-foreground opacity-50" />
+                <div className="py-8 sm:py-12 text-center space-y-3 sm:space-y-4">
+                  <Database size={40} className="sm:w-12 sm:h-12 mx-auto text-muted-foreground opacity-50" />
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">No repositories indexed yet</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">No repositories indexed yet</p>
                     <Button
                       size="sm"
                       onClick={handleSeedData}
-                      className="neon-border-violet glow-violet"
+                      className="neon-border-violet glow-violet text-xs sm:text-sm"
                     >
-                      <Database size={16} className="mr-1.5" />
+                      <Database size={14} className="sm:w-4 sm:h-4 mr-1.5" />
                       Load Sample Data
                     </Button>
                   </div>
                 </div>
               ) : filteredRepos.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground text-sm">
+                <div className="py-6 sm:py-8 text-center text-muted-foreground text-xs sm:text-sm">
                   No repositories match your search
                 </div>
               ) : (
@@ -322,68 +323,74 @@ function App() {
             </div>
 
             <Button
-              className="w-full neon-border-violet glow-violet"
+              className="w-full neon-border-violet glow-violet text-xs sm:text-sm"
               onClick={() => setClaimModalOpen(true)}
             >
-              <Plus size={18} />
-              Submit Identity Claim
+              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden sm:inline">Submit Identity Claim</span>
+              <span className="sm:hidden">New Claim</span>
             </Button>
           </div>
 
-          <div className="lg:col-span-6 space-y-6">
+          <div className="lg:col-span-6 space-y-4 sm:space-y-6">
             <Tabs defaultValue="analytics" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="analytics">
-                  <ChartLineUp size={16} className="mr-1.5" />
-                  Analytics
+              <TabsList className="grid w-full grid-cols-4 h-auto">
+                <TabsTrigger value="analytics" className="text-xs sm:text-sm py-2">
+                  <ChartLineUp size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Analytics</span>
+                  <span className="sm:hidden">Data</span>
                 </TabsTrigger>
-                <TabsTrigger value="workers">
-                  <Gear size={16} className="mr-1.5" />
-                  Workers
+                <TabsTrigger value="workers" className="text-xs sm:text-sm py-2">
+                  <Gear size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Workers</span>
+                  <span className="sm:hidden">Work</span>
                 </TabsTrigger>
-                <TabsTrigger value="healing">
-                  <ShieldCheck size={16} className="mr-1.5" />
-                  Healdec
+                <TabsTrigger value="healing" className="text-xs sm:text-sm py-2">
+                  <ShieldCheck size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Healdec</span>
+                  <span className="sm:hidden">Heal</span>
                 </TabsTrigger>
-                <TabsTrigger value="claims">
-                  <IdentificationCard size={16} className="mr-1.5" />
-                  Claims
+                <TabsTrigger value="claims" className="text-xs sm:text-sm py-2">
+                  <IdentificationCard size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Claims</span>
+                  <span className="sm:hidden">IDs</span>
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="analytics" className="space-y-4 mt-4">
+              <TabsContent value="analytics" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-space font-semibold">Fleet Health Analytics</h3>
-                  <Badge variant="outline" className="text-xs">
+                  <h3 className="text-sm sm:text-base font-space font-semibold">Fleet Health Analytics</h3>
+                  <Badge variant="outline" className="text-[10px] sm:text-xs">
                     Real-time metrics
                   </Badge>
                 </div>
                 <FleetHealthCharts repositories={repositories || []} workers={workers || []} />
               </TabsContent>
 
-              <TabsContent value="workers" className="space-y-4 mt-4">
+              <TabsContent value="workers" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-space font-semibold">Worker Pool Status</h3>
-                  <Badge variant="outline" className="text-xs">
+                  <h3 className="text-sm sm:text-base font-space font-semibold">Worker Pool Status</h3>
+                  <Badge variant="outline" className="text-[10px] sm:text-xs">
                     12 Parallel Workers
                   </Badge>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {(workers || []).map((worker) => (
                     <WorkerCard key={worker.id} worker={worker} />
                   ))}
                 </div>
               </TabsContent>
 
-              <TabsContent value="healing" className="space-y-4 mt-4">
+              <TabsContent value="healing" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-space font-semibold">
+                  <h3 className="text-sm sm:text-base font-space font-semibold">
                     Auto-Healing Activity
                   </h3>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => setHealdecModalOpen(true)}
+                    className="text-xs"
                   >
                     View Full Log
                   </Button>
@@ -392,13 +399,13 @@ function App() {
                   {(healdecLogs || []).slice(0, 5).map((log) => (
                     <div
                       key={log.id}
-                      className="p-3 rounded-lg border border-border bg-card/50 text-sm"
+                      className="p-2.5 sm:p-3 rounded-lg border border-border bg-card/50 text-xs sm:text-sm"
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-[10px] sm:text-xs">
                           {log.action}
                         </Badge>
-                        <span className="text-xs text-muted-foreground font-mono">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground font-mono">
                           {new Date(log.timestamp).toLocaleTimeString()}
                         </span>
                       </div>
@@ -408,27 +415,27 @@ function App() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="claims" className="space-y-4 mt-4">
+              <TabsContent value="claims" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-space font-semibold">Recent Claims</h3>
+                  <h3 className="text-sm sm:text-base font-space font-semibold">Recent Claims</h3>
                   <Button
                     size="sm"
                     onClick={() => setClaimModalOpen(true)}
-                    className="neon-border-violet"
+                    className="neon-border-violet text-xs"
                   >
-                    <Plus size={16} />
-                    New Claim
+                    <Plus size={14} className="sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline ml-1">New Claim</span>
                   </Button>
                 </div>
-                <div className="p-8 text-center text-muted-foreground">
+                <div className="p-6 sm:p-8 text-center text-muted-foreground text-xs sm:text-sm">
                   No identity claims yet. Submit your first claim to get started.
                 </div>
               </TabsContent>
             </Tabs>
           </div>
 
-          <div className="lg:col-span-3 space-y-4">
-            <h2 className="text-lg font-space font-semibold">Live System Log</h2>
+          <div className="lg:col-span-3 space-y-3 sm:space-y-4 hidden lg:block">
+            <h2 className="text-base sm:text-lg font-space font-semibold">Live System Log</h2>
             <SmartBrainTerminal logs={logs || []} maxHeight="calc(100vh - 200px)" />
           </div>
         </div>

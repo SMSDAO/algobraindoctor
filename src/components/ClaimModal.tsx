@@ -52,22 +52,23 @@ export function ClaimModal({ open, onOpenChange, onSubmit }: ClaimModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-card/95 backdrop-blur-md neon-border-violet glow-violet">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg bg-card/95 backdrop-blur-md neon-border-violet glow-violet">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-space flex items-center gap-2">
-            <IdentificationCard size={28} className="text-[var(--aura-violet)]" />
-            Submit Identity Claim
+          <DialogTitle className="text-lg sm:text-2xl font-space flex items-center gap-2">
+            <IdentificationCard size={24} className="sm:w-7 sm:h-7 text-[var(--aura-violet)]" />
+            <span className="hidden sm:inline">Submit Identity Claim</span>
+            <span className="sm:hidden">New Claim</span>
           </DialogTitle>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             Link your identity to repositories and establish governance rights
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="identity-type">Identity Type</Label>
+        <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="identity-type" className="text-xs sm:text-sm">Identity Type</Label>
             <Select value={identityType} onValueChange={setIdentityType}>
-              <SelectTrigger id="identity-type">
+              <SelectTrigger id="identity-type" className="text-xs sm:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -79,24 +80,24 @@ export function ClaimModal({ open, onOpenChange, onSubmit }: ClaimModalProps) {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="handle">Handle / Address</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="handle" className="text-xs sm:text-sm">Handle / Address</Label>
             <Input
               id="handle"
               placeholder="e.g., octocat or 0x..."
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
-              className="font-mono"
+              className="font-mono text-xs sm:text-sm"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="claim-type">Claim Type</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="claim-type" className="text-xs sm:text-sm">Claim Type</Label>
             <Select
               value={claimType}
               onValueChange={(value) => setClaimType(value as IdentityClaimType)}
             >
-              <SelectTrigger id="claim-type">
+              <SelectTrigger id="claim-type" className="text-xs sm:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -109,15 +110,15 @@ export function ClaimModal({ open, onOpenChange, onSubmit }: ClaimModalProps) {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="evidence">Evidence (Optional)</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="evidence" className="text-xs sm:text-sm">Evidence (Optional)</Label>
             <Textarea
               id="evidence"
               placeholder="Provide links, commit SHAs, or other proof..."
               value={evidence}
               onChange={(e) => setEvidence(e.target.value)}
               rows={4}
-              className="font-mono text-xs"
+              className="font-mono text-[10px] sm:text-xs"
             />
           </div>
 
@@ -125,13 +126,13 @@ export function ClaimModal({ open, onOpenChange, onSubmit }: ClaimModalProps) {
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="flex-1"
+              className="flex-1 text-xs sm:text-sm"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
-              className="flex-1 neon-border-violet glow-violet hover:brightness-110"
+              className="flex-1 neon-border-violet glow-violet hover:brightness-110 text-xs sm:text-sm"
             >
               Submit Claim
             </Button>
