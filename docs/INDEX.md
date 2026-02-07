@@ -17,7 +17,13 @@ Start here if you're new to AlgoBrainDoctor.
    - Technology stack
    - Basic usage instructions
 
-2. **[User Guide](USER_GUIDE.md)** - Complete user documentation
+2. **[Quick Reference](QUICK_REFERENCE.md)** - Essential commands and patterns
+   - Common commands and workflows
+   - Code patterns and templates
+   - Quick troubleshooting
+   - Pro tips
+
+3. **[User Guide](USER_GUIDE.md)** - Complete user documentation
    - Interface overview
    - Common tasks and workflows
    - Role-specific guides
@@ -101,6 +107,11 @@ Start here if you're new to AlgoBrainDoctor.
     - Release notes and version history
     - Upgrade guides
     - Future roadmap
+
+14. **[Glossary](GLOSSARY.md)** - Terms and definitions
+    - Technical terms explained
+    - Acronyms and abbreviations
+    - Key concepts
 
 ---
 

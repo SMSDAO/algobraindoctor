@@ -3,8 +3,9 @@
 > **Production-ready repository health monitoring and auto-healing platform**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-4.0.0-purple.svg)](PRD.md)
-[![Status](https://img.shields.io/badge/status-production--ready-green.svg)](PRD.md)
+[![Version](https://img.shields.io/badge/version-4.0.0-purple.svg)](docs/CHANGELOG.md)
+[![Status](https://img.shields.io/badge/status-production--ready-green.svg)](docs/FEATURES.md)
+[![Docs](https://img.shields.io/badge/docs-complete-success.svg)](docs/INDEX.md)
 
 ---
 
