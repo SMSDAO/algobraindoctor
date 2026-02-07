@@ -26,12 +26,21 @@ Brain-Doctor Hospital V4 is an advanced GitOps health monitoring system that con
 
 ## 📚 Documentation
 
-### Core Features
+**Complete documentation is available in the [`docs/`](docs/) directory.**
 
-- **[PRD.md](PRD.md)** - Complete product requirements document
-  - Essential features and user flows
-  - Design direction and aesthetic principles
-  - Component selection and UI/UX specifications
+### Quick Links
+
+- **[Documentation Index](docs/INDEX.md)** - Complete documentation navigation
+- **[User Guide](docs/USER_GUIDE.md)** - How to use AlgoBrainDoctor
+- **[Development Guide](docs/DEVELOPMENT.md)** - Setup and development workflow
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute
+- **[Architecture](docs/ARCHITECTURE.md)** - Technical architecture
+- **[Features](docs/FEATURES.md)** - Detailed feature documentation
+- **[API Reference](docs/API.md)** - Component and type reference
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Product Requirements (PRD)](docs/PRD.md)** - Product specifications
+- **[Security Policy](docs/SECURITY.md)** - Security information
 
 ---
 
