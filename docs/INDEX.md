@@ -97,6 +97,11 @@ Start here if you're new to AlgoBrainDoctor.
 12. **[License](../LICENSE)** - MIT License
     - Usage terms and conditions
 
+13. **[Changelog](CHANGELOG.md)** - Version history
+    - Release notes and version history
+    - Upgrade guides
+    - Future roadmap
+
 ---
 
 ## 🎯 Quick Navigation by Role
