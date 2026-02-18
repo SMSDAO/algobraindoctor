@@ -45,6 +45,26 @@ Brain-Doctor Hospital V4 is an advanced GitOps health monitoring system that con
 
 ---
 
+## 📸 UI Screenshots
+
+### Landing Page (Empty State)
+![Landing Page Empty State](https://github.com/user-attachments/assets/6ca3881d-47a5-4fdc-b9ad-7787099c4926)
+*Initial dashboard view before loading sample data*
+
+### User Dashboard (Populated)
+![User Dashboard with Data](https://github.com/user-attachments/assets/304645c1-848a-4a7b-ba4b-19490426c544)
+*Main analytics dashboard showing fleet health metrics, repository list, and live system logs*
+
+### Admin Workers Dashboard
+![Admin Workers Dashboard](https://github.com/user-attachments/assets/7b7019c7-4553-4d04-ae70-0f5872c38a56)
+*Worker pool status showing all 12 parallel workers with job metrics and health status*
+
+### Repository Health Modal
+![Repository Vitals Modal](https://github.com/user-attachments/assets/490550a5-d486-4e1a-8987-83678beb7a88)
+*Detailed repository health dashboard with scores, activity metrics, and detected frameworks*
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
