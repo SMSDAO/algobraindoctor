@@ -12,6 +12,7 @@ import { VitalsModal } from '@/components/VitalsModal'
 import { HealdecModal } from '@/components/HealdecModal'
 import { ClaimModal } from '@/components/ClaimModal'
 import { FleetHealthCharts } from '@/components/FleetHealthCharts'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
   Brain,
   GitBranch,
@@ -38,6 +39,7 @@ import { cn } from '@/lib/utils'
 import { generateSeedData } from '@/lib/seedData'
 
 function App() {
+  const isMobile = useIsMobile()
   const [selectedRole, setSelectedRole] = useKV<RoleType>('selected-role', 'admin')
   const [repositories, setRepositories] = useKV<Repository[]>('repositories', [])
   const [workers, setWorkers] = useKV<Worker[]>('workers', [])
@@ -322,14 +324,15 @@ function App() {
               )}
             </div>
 
-            <Button
-              className="w-full neon-border-violet glow-violet text-xs sm:text-sm"
-              onClick={() => setClaimModalOpen(true)}
-            >
-              <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
-              <span className="hidden sm:inline">Submit Identity Claim</span>
-              <span className="sm:hidden">New Claim</span>
-            </Button>
+            {!isMobile && (
+              <Button
+                className="w-full neon-border-violet glow-violet text-xs sm:text-sm"
+                onClick={() => setClaimModalOpen(true)}
+              >
+                <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
+                Submit Identity Claim
+              </Button>
+            )}
           </div>
 
           <div className="lg:col-span-6 space-y-4 sm:space-y-6">
@@ -457,6 +460,17 @@ function App() {
         onOpenChange={setClaimModalOpen}
         onSubmit={handleClaimSubmit}
       />
+
+      {isMobile && (
+        <Button
+          size="lg"
+          onClick={() => setClaimModalOpen(true)}
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg neon-border-violet glow-violet p-0 z-50 hover:scale-110 transition-transform duration-200"
+          aria-label="Submit identity claim"
+        >
+          <IdentificationCard size={24} weight="duotone" />
+        </Button>
+      )}
     </div>
   )
 }
