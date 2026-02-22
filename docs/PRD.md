@@ -156,3 +156,13 @@ Animations should feel **clinical and deterministic** — no bounce, no overshoo
   - Cards stack vertically with preserved glow effects
   - Tables become scrollable with sticky headers
   - Modals slide up from bottom instead of center fade
+
+---
+
+## 🔗 Related Documentation
+
+- **[Features](FEATURES.md)** - Detailed feature documentation
+- **[Architecture](ARCHITECTURE.md)** - System architecture overview
+- **[User Guide](USER_GUIDE.md)** - How to use the application
+- **[Development Guide](DEVELOPMENT.md)** - Development setup
+- **[API Reference](API.md)** - Component APIs

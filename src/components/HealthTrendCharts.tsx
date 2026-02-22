@@ -32,7 +32,7 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
     const dataPoints: Array<{ date: string; healthScore: number; governanceScore: number }> = []
 
     let currentHealthScore = repo.healthScore
-    let currentGovernanceScore = repo.governanceScore
+    const currentGovernanceScore = repo.governanceScore
 
     for (let i = 30; i >= 0; i--) {
       const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000)

@@ -541,3 +541,15 @@ This architecture document is the **source of truth** for AlgoBrainDoctor v0.1's
 **Last Updated:** 2024-01-28  
 **Version:** 4.0.0  
 **Status:** Production Ready
+
+---
+
+## 🔗 Related Documentation
+
+- **[Features](FEATURES.md)** - Detailed feature documentation
+- **[Development Guide](DEVELOPMENT.md)** - Setup and development workflow
+- **[API Reference](API.md)** - Component and type reference
+- **[PRD](PRD.md)** - Product requirements document
+- **[User Guide](USER_GUIDE.md)** - Usage instructions
+- **[Deployment](DEPLOYMENT.md)** - Production deployment
+- **[Contributing](CONTRIBUTING.md)** - How to contribute
