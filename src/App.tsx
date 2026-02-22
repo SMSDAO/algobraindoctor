@@ -37,6 +37,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { generateSeedData } from '@/lib/seedData'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 function App() {
   const isMobile = useIsMobile()
@@ -462,14 +463,25 @@ function App() {
       />
 
       {isMobile && (
-        <Button
-          size="lg"
-          onClick={() => setClaimModalOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg neon-border-violet glow-violet p-0 z-50 hover:scale-110 transition-transform duration-200"
-          aria-label="Submit identity claim"
-        >
-          <IdentificationCard size={24} weight="duotone" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="lg"
+              onClick={() => setClaimModalOpen(true)}
+              className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg neon-border-violet glow-violet p-0 z-50 hover:scale-110 transition-transform duration-200"
+              aria-label="Submit identity claim"
+            >
+              <IdentificationCard size={24} weight="duotone" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent 
+            side="left" 
+            sideOffset={8}
+            className="bg-[var(--aura-violet)] text-white border-none font-medium shadow-lg"
+          >
+            Submit Identity Claim
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   )
