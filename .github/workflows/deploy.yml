@@ -14,13 +14,20 @@ on:
           - staging
           - production
 
+# Required for GitHub Pages deployment
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment to avoid race conditions
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'staging' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -42,17 +49,30 @@ jobs:
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_LOG_LEVEL: info
 
-      - name: Deploy to GitHub Pages (static export)
+      - name: Upload GitHub Pages artifact
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/
 
       # -----------------------------------------------------------------------
-      # Extension point: add your deployment steps here.
+      # Extension point: add additional deployment steps here.
       # Examples:
       #   - Vercel: use amondnet/vercel-action
       #   - Netlify: use nwtgck/actions-netlify
       #   - Docker: build and push to registry, then deploy to Kubernetes/ECS
       #   - Firebase Hosting: use FirebaseExtended/action-hosting-deploy
       # -----------------------------------------------------------------------
+
+  deploy-pages:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

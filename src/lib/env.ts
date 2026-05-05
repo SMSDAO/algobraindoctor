@@ -9,6 +9,12 @@ import { z } from 'zod'
 const envSchema = z.object({
   /** OpenAI API key for the prompt optimizer engine. */
   VITE_OPENAI_API_KEY: z.string().min(1).optional(),
+  /**
+   * URL of a server-side AI proxy (recommended for public deployments).
+   * When set, AI requests are routed here without exposing the API key
+   * in the browser bundle. The proxy is responsible for adding auth headers.
+   */
+  VITE_OPENAI_PROXY_URL: z.string().url().optional(),
   /** OpenAI model name, defaults to gpt-4o-mini for cost efficiency. */
   VITE_OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   /** OpenAI API base URL – override to use compatible proxies. */
@@ -35,8 +41,10 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>
 
 function parseEnv(): Env {
-  const raw =
-    typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
+  const raw: Record<string, unknown> =
+    typeof import.meta !== 'undefined' && import.meta.env
+      ? { ...(import.meta.env as Record<string, unknown>) }
+      : {}
 
   const result = envSchema.safeParse(raw)
 
@@ -44,10 +52,20 @@ function parseEnv(): Env {
     const issues = result.error.issues
       .map((i) => `  ${i.path.join('.')}: ${i.message}`)
       .join('\n')
-    // Log to stderr; app can still start if all errors are on optional fields
     console.error(`[env] Environment validation warnings:\n${issues}`)
-    // Return with defaults for optional fields
-    return envSchema.parse({})
+
+    // Preserve all valid fields; only drop the keys that failed validation so
+    // that unrelated correct settings (e.g. VITE_OPENAI_BASE_URL) are not
+    // silently reset to defaults.
+    const failedKeys = new Set(
+      result.error.issues
+        .map((i) => i.path[0])
+        .filter((p): p is string => typeof p === 'string'),
+    )
+    const sanitizedRaw: Record<string, unknown> = Object.fromEntries(
+      Object.entries(raw).filter(([key]) => !failedKeys.has(key)),
+    )
+    return envSchema.parse(sanitizedRaw)
   }
 
   return result.data

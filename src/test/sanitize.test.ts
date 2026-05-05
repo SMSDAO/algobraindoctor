@@ -88,6 +88,13 @@ describe('sanitize', () => {
       expect(result.sanitized).not.toMatch(/\n{3,}/)
     })
 
+    it('should preserve indentation and spaces in code snippets', () => {
+      const code = 'Fix this:\n    if (x === 0) {\n        return true\n    }'
+      const result = sanitizePrompt(code)
+      expect(result.sanitized).toContain('    if (x === 0)')
+      expect(result.sanitized).toContain('        return true')
+    })
+
     it('should preserve legitimate technical prompts', () => {
       const technical = 'Review this TypeScript function for performance issues:\nconst add = (a: number, b: number) => a + b'
       const result = sanitizePrompt(technical)

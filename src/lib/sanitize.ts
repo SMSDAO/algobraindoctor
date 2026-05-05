@@ -92,8 +92,10 @@ export function sanitizePrompt(
     }
   }
 
-  // Normalise excessive whitespace
-  sanitized = sanitized.replace(/\s{3,}/g, '\n\n').trim()
+  // Collapse runs of 3+ consecutive newlines to two (blank line), but leave
+  // spaces and tabs untouched so that code snippets and indented content are
+  // preserved exactly.
+  sanitized = sanitized.replace(/(\r?\n){3,}/g, '\n\n').trim()
 
   // Enforce max length
   if (sanitized.length > maxLength) {

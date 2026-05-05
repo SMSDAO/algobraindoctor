@@ -2,9 +2,20 @@
  * AI service client with retry, timeout, fallback handling,
  * and token usage logging hooks.
  *
- * This module wraps OpenAI-compatible APIs with production-grade
- * resilience patterns. It can be used in both browser (Vite/Spark)
- * and Node.js environments.
+ * ⚠️  SECURITY NOTE — client-side API keys
+ * ─────────────────────────────────────────
+ * This module runs in the browser. `VITE_*` variables are embedded into
+ * the production bundle at build time and are visible to every end-user.
+ * Do NOT put a real OpenAI API key in `VITE_OPENAI_API_KEY` unless the
+ * application is deployed in a controlled environment where only trusted
+ * users can access the bundle (e.g. an internal tool behind auth).
+ *
+ * Recommended approach for public deployments:
+ * 1. Set `VITE_OPENAI_PROXY_URL` to a URL you control (e.g. /api/ai).
+ * 2. Have that server-side route add the real API key from a secure
+ *    secret store and forward the request to OpenAI.
+ * 3. Leave `VITE_OPENAI_API_KEY` empty — the client will route through
+ *    the proxy without ever touching the raw key.
  */
 
 import { logger } from '@/lib/logger'
@@ -69,43 +80,59 @@ interface OpenAIErrorBody {
   error?: { message?: string; code?: string }
 }
 
+// Warn only once per module load (not on every request) to avoid console spam.
+let _directKeyWarned = false
+
 async function fetchCompletion(
   request: CompletionRequest,
   attempt: number,
 ): Promise<CompletionResponse> {
+  const proxyUrl = env.VITE_OPENAI_PROXY_URL
   const apiKey = env.VITE_OPENAI_API_KEY
-  if (!apiKey) {
+
+  if (!proxyUrl && !apiKey) {
     throw new Error(
-      'VITE_OPENAI_API_KEY is not configured. Set this environment variable to use AI features.',
+      'AI is not configured. Set VITE_OPENAI_PROXY_URL (recommended) or VITE_OPENAI_API_KEY.',
+    )
+  }
+
+  if (!proxyUrl && apiKey && !_directKeyWarned) {
+    _directKeyWarned = true
+    console.warn(
+      '[ai] VITE_OPENAI_API_KEY is set in the browser bundle. ' +
+        'This key is visible to end-users. Use VITE_OPENAI_PROXY_URL for public deployments.',
     )
   }
 
   const model = request.model ?? env.VITE_OPENAI_MODEL
   const maxTokens = request.maxTokens ?? env.VITE_OPENAI_MAX_TOKENS
-  const url = `${env.VITE_OPENAI_BASE_URL}/chat/completions`
+  const url = proxyUrl ?? `${env.VITE_OPENAI_BASE_URL}/chat/completions`
 
+  // Single AbortController handles both the 30 s timeout and any caller-provided signal.
+  // Forwarding the caller's abort to our controller means controller.signal is the
+  // single source of truth — both paths (timeout and caller cancel) abort the same fetch.
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
-  // Merge provided signal with our timeout signal
-  const signal = request.signal
-    ? new AbortController().signal
-    : controller.signal
-
   if (request.signal) {
-    request.signal.addEventListener('abort', () => controller.abort())
+    request.signal.addEventListener('abort', () => controller.abort(), { once: true })
   }
 
   const startedAt = Date.now()
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+  // Only add Authorization when going directly to OpenAI (not via proxy)
+  if (!proxyUrl && apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`
+  }
+
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      signal,
+      headers,
+      signal: controller.signal,
       body: JSON.stringify({
         model,
         messages: request.messages,
@@ -235,8 +262,9 @@ export async function createCompletionWithFallback(
 
 /**
  * Check whether the AI service is configured and accessible.
- * Returns true if VITE_OPENAI_API_KEY is set; does NOT make a network call.
+ * Returns true if VITE_OPENAI_PROXY_URL or VITE_OPENAI_API_KEY is set;
+ * does NOT make a network call.
  */
 export function isAiConfigured(): boolean {
-  return Boolean(env.VITE_OPENAI_API_KEY)
+  return Boolean(env.VITE_OPENAI_PROXY_URL ?? env.VITE_OPENAI_API_KEY)
 }

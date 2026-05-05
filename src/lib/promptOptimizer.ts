@@ -284,7 +284,7 @@ export function optimizePrompt(
 
   logger.info('Prompt optimized', {
     domain,
-    style,
+    style: template.style,
     templateKey: template.key,
     originalLength: sanitized.length,
     optimizedLength: optimized.length,
@@ -297,7 +297,10 @@ export function optimizePrompt(
     original: sanitized,
     optimized,
     domain,
-    style,
+    // Report the style from the template that was actually used. When the
+    // requested style has no matching template for the domain, selectTemplate()
+    // falls back to a different style — the returned value reflects reality.
+    style: template.style,
     templateKey: template.key,
     estimatedTokens: estimateTokens(optimized),
     warnings,

@@ -61,6 +61,11 @@ declare global {
 
 let _session: WalletSession | null = null
 
+// Named event-handler references — stored so they can be removed before
+// re-registering on reconnect, preventing duplicate listener accumulation.
+let _accountsChangedHandler: ((accs: unknown) => void) | null = null
+let _chainChangedHandler: ((chainIdHex: unknown) => void) | null = null
+
 /** Get the current wallet session, or null if not connected. */
 export function getWalletSession(): WalletSession | null {
   return _session
@@ -118,8 +123,16 @@ export async function connectWallet(provider: WalletProvider = 'injected'): Prom
 
   logger.info('Wallet connected', { address: _session.address, chainId })
 
-  // Set up disconnect listener
-  ethereum.on('accountsChanged', (accs: unknown) => {
+  // Remove any previously registered listeners before adding new ones to
+  // prevent duplicate handlers from accumulating across reconnections.
+  if (_accountsChangedHandler) {
+    ethereum.removeListener('accountsChanged', _accountsChangedHandler)
+  }
+  if (_chainChangedHandler) {
+    ethereum.removeListener('chainChanged', _chainChangedHandler)
+  }
+
+  _accountsChangedHandler = (accs: unknown) => {
     const accounts = accs as string[]
     if (!accounts || accounts.length === 0) {
       clearWalletSession()
@@ -129,15 +142,18 @@ export async function connectWallet(provider: WalletProvider = 'injected'): Prom
         logger.info('Wallet account changed', { address: _session.address })
       }
     }
-  })
+  }
 
-  ethereum.on('chainChanged', (chainIdHex: unknown) => {
+  _chainChangedHandler = (chainIdHex: unknown) => {
     const newChainId = parseInt(chainIdHex as string, 16)
     if (_session) {
       _session = { ..._session, chainId: newChainId }
       logger.info('Wallet chain changed', { chainId: newChainId })
     }
-  })
+  }
+
+  ethereum.on('accountsChanged', _accountsChangedHandler)
+  ethereum.on('chainChanged', _chainChangedHandler)
 
   return _session
 }
@@ -189,18 +205,23 @@ export async function signChallenge(challenge: SignatureChallenge): Promise<stri
 }
 
 /**
- * Verify a wallet signature on the client side (basic check).
+ * Check the structural format of a wallet signature.
  *
- * For full server-side verification, use ethers.js `verifyMessage` in your
- * API route or backend service. This client-side function provides a
- * structural validation only.
+ * ⚠️  This is NOT cryptographic verification. It only validates that the
+ * address and signature strings match the expected hex formats (EIP-55
+ * address + 65-byte signature). It does NOT recover the signer from the
+ * signature or compare it against `address`.
+ *
+ * For real authentication use `ethers.verifyMessage(message, signature)`
+ * (or equivalent) in a trusted server-side context, and compare the
+ * recovered address to the expected address before granting access.
  */
-export function verifySignature(
+export function checkSignatureFormat(
   address: string,
   message: string,
   signature: string,
 ): SignatureVerification {
-  // Basic structural validation
+  // Structural format checks only — NOT cryptographic verification
   const isValidAddress = /^0x[0-9a-fA-F]{40}$/.test(address)
   const isValidSig = /^0x[0-9a-fA-F]{130}$/.test(signature)
   const hasMessage = message.length > 0
@@ -208,7 +229,7 @@ export function verifySignature(
   const valid = isValidAddress && isValidSig && hasMessage
 
   if (!valid) {
-    logger.warn('Signature verification failed structural check', {
+    logger.warn('Signature format check failed', {
       isValidAddress,
       isValidSig,
       hasMessage,
