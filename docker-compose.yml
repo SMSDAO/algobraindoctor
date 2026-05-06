@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Web (SPA served via nginx)
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_APP_VERSION: ${VITE_APP_VERSION:-local}
+        VITE_LOG_LEVEL: ${VITE_LOG_LEVEL:-info}
+        VITE_OPENAI_MODEL: ${VITE_OPENAI_MODEL:-gpt-4o-mini}
+        VITE_OPENAI_BASE_URL: ${VITE_OPENAI_BASE_URL:-https://api.openai.com/v1}
+        VITE_OPENAI_MAX_TOKENS: ${VITE_OPENAI_MAX_TOKENS:-2048}
+    ports:
+      - '${WEB_PORT:-8080}:8080'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:8080/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Redis (optional: for rate limiting, session storage, or caching in a
+  # dedicated API server)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    ports:
+      # Bind to loopback only — not exposed on all network interfaces by default.
+      # Remove or change '127.0.0.1:' if access from other hosts is required.
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--no-auth-warning', '-a', '${REDIS_PASSWORD:?REDIS_PASSWORD must be set}', 'ping']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  redis_data:

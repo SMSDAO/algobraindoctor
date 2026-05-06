@@ -38,6 +38,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { generateSeedData } from '@/lib/seedData'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { createSession, ROLE_PERMISSIONS, type Role } from '@/services/auth'
 
 function App() {
   const isMobile = useIsMobile()
@@ -53,6 +54,21 @@ function App() {
   const [healdecModalOpen, setHealdecModalOpen] = useState(false)
   const [claimModalOpen, setClaimModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Sync the auth service session whenever the selected role changes so that
+  // permission checks throughout the app stay consistent with the role shown
+  // in the header. `createSession` is synchronous — no async race condition.
+  useEffect(() => {
+    if (selectedRole) {
+      createSession('spark-user', 'Spark User', selectedRole as Role)
+    }
+  }, [selectedRole])
+
+  // Derive permission flags directly from the role (React state) rather than
+  // reading from module-level auth state to avoid stale reads.
+  const rolePermissions = ROLE_PERMISSIONS[(selectedRole ?? 'user') as Role] ?? []
+  const canWriteRepos = rolePermissions.includes('repos:write')
+  const canWriteClaims = rolePermissions.includes('claims:write')
 
   useEffect(() => {
     if ((timelineEvents || []).length === 0 && (repositories || []).length > 0) {
@@ -299,14 +315,20 @@ function App() {
                   <Database size={40} className="sm:w-12 sm:h-12 mx-auto text-muted-foreground opacity-50" />
                   <div>
                     <p className="text-xs sm:text-sm text-muted-foreground mb-2">No repositories indexed yet</p>
-                    <Button
-                      size="sm"
-                      onClick={handleSeedData}
-                      className="neon-border-violet glow-violet text-xs sm:text-sm"
-                    >
-                      <Database size={14} className="sm:w-4 sm:h-4 mr-1.5" />
-                      Load Sample Data
-                    </Button>
+                    {canWriteRepos ? (
+                      <Button
+                        size="sm"
+                        onClick={handleSeedData}
+                        className="neon-border-violet glow-violet text-xs sm:text-sm"
+                      >
+                        <Database size={14} className="sm:w-4 sm:h-4 mr-1.5" />
+                        Load Sample Data
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">
+                        Switch to Admin or Developer role to load data
+                      </p>
+                    )}
                   </div>
                 </div>
               ) : filteredRepos.length === 0 ? (
@@ -325,7 +347,7 @@ function App() {
               )}
             </div>
 
-            {!isMobile && (
+            {!isMobile && canWriteClaims && (
               <Button
                 className="w-full neon-border-violet glow-violet text-xs sm:text-sm"
                 onClick={() => setClaimModalOpen(true)}
@@ -422,14 +444,16 @@ function App() {
               <TabsContent value="claims" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm sm:text-base font-space font-semibold">Recent Claims</h3>
-                  <Button
-                    size="sm"
-                    onClick={() => setClaimModalOpen(true)}
-                    className="neon-border-violet text-xs"
-                  >
-                    <Plus size={14} className="sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline ml-1">New Claim</span>
-                  </Button>
+                  {canWriteClaims && (
+                    <Button
+                      size="sm"
+                      onClick={() => setClaimModalOpen(true)}
+                      className="neon-border-violet text-xs"
+                    >
+                      <Plus size={14} className="sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline ml-1">New Claim</span>
+                    </Button>
+                  )}
                 </div>
                 <div className="p-6 sm:p-8 text-center text-muted-foreground text-xs sm:text-sm">
                   No identity claims yet. Submit your first claim to get started.
@@ -462,7 +486,7 @@ function App() {
         onSubmit={handleClaimSubmit}
       />
 
-      {isMobile && (
+      {isMobile && canWriteClaims && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

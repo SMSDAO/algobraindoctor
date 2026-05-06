@@ -1,0 +1,82 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+# Required for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment to avoid race conditions
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}
+          # Use info logging for production (and push-to-main), debug for staging.
+          # Falls back to 'info' for push-to-main triggers where the input is unset.
+          VITE_LOG_LEVEL: ${{ (github.event.inputs.environment || 'production') == 'production' && 'info' || 'debug' }}
+
+      - name: Upload GitHub Pages artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+      # -----------------------------------------------------------------------
+      # Extension point: add additional deployment steps here.
+      # Wire ${{ github.event.inputs.environment || 'staging' }} to choose the
+      # target (e.g. vercel --prod, netlify --prod, docker tag :production).
+      # Examples:
+      #   - Vercel: use amondnet/vercel-action
+      #   - Netlify: use nwtgck/actions-netlify
+      #   - Docker: build and push to registry, then deploy to Kubernetes/ECS
+      #   - Firebase Hosting: use FirebaseExtended/action-hosting-deploy
+      # -----------------------------------------------------------------------
+
+  deploy-pages:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
