@@ -23,7 +23,7 @@ const INJECTION_PATTERNS: RegExp[] = [
 
 /** Patterns for common PII that should be flagged or removed. */
 const PII_PATTERNS: Array<{ pattern: RegExp; replacement: string }> = [
-  { pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, replacement: '[EMAIL]' },
+  { pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, replacement: '[EMAIL]' },
   { pattern: /\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, replacement: '[PHONE]' },
   {
     pattern: /\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b/g,
@@ -122,6 +122,11 @@ export function validateAndSanitizePrompt(
 
   if (result.injectionDetected) {
     throw new Error('Prompt injection attempt detected. Please rephrase your request.')
+  }
+
+  // Reject whitespace-only inputs that sanitize down to an empty string.
+  if (result.sanitized.length === 0) {
+    throw new Error('Prompt must be a non-empty string')
   }
 
   return result

@@ -30,14 +30,16 @@ services:
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD:-changeme}
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      # Bind to loopback only — not exposed on all network interfaces by default.
+      # Remove or change '127.0.0.1:' if access from other hosts is required.
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'redis-cli', '--no-auth-warning', '-a', '${REDIS_PASSWORD:-changeme}', 'ping']
+      test: ['CMD', 'redis-cli', '--no-auth-warning', '-a', '${REDIS_PASSWORD:?REDIS_PASSWORD must be set}', 'ping']
       interval: 30s
       timeout: 5s
       retries: 3

@@ -208,9 +208,10 @@ export async function signChallenge(challenge: SignatureChallenge): Promise<stri
  * Check the structural format of a wallet signature.
  *
  * ⚠️  This is NOT cryptographic verification. It only validates that the
- * address and signature strings match the expected hex formats (EIP-55
- * address + 65-byte signature). It does NOT recover the signer from the
- * signature or compare it against `address`.
+ * address and signature strings match the expected hex formats (0x-prefixed
+ * 40-hex address + 65-byte signature). It does NOT validate the EIP-55
+ * checksum, recover the signer from the signature, or compare it against
+ * `address`.
  *
  * For real authentication use `ethers.verifyMessage(message, signature)`
  * (or equivalent) in a trusted server-side context, and compare the

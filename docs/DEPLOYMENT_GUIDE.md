@@ -43,7 +43,11 @@ cp .env.example .env
 
 | Variable | Description |
 |---|---|
-| `VITE_OPENAI_API_KEY` | OpenAI API key — get from https://platform.openai.com/api-keys |
+| `VITE_OPENAI_PROXY_URL` | **Recommended** — URL of a server-side AI proxy (e.g. `/api/ai`) that adds the real key; no secret in the browser bundle |
+| `VITE_OPENAI_API_KEY` | Direct OpenAI API key — only suitable for internal/trusted deployments where the bundle is not publicly accessible |
+
+> At least one of the two variables above must be set to enable AI features.
+> For public deployments, prefer `VITE_OPENAI_PROXY_URL` so the API key is never embedded in the browser bundle.
 
 ### Optional but Recommended for Production
 

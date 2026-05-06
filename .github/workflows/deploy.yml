@@ -47,7 +47,9 @@ jobs:
         run: npm run build
         env:
           VITE_APP_VERSION: ${{ github.sha }}
-          VITE_LOG_LEVEL: info
+          # Use info logging for production (and push-to-main), debug for staging.
+          # Falls back to 'info' for push-to-main triggers where the input is unset.
+          VITE_LOG_LEVEL: ${{ (github.event.inputs.environment || 'production') == 'production' && 'info' || 'debug' }}
 
       - name: Upload GitHub Pages artifact
         if: github.ref == 'refs/heads/main'
@@ -57,6 +59,8 @@ jobs:
 
       # -----------------------------------------------------------------------
       # Extension point: add additional deployment steps here.
+      # Wire ${{ github.event.inputs.environment || 'staging' }} to choose the
+      # target (e.g. vercel --prod, netlify --prod, docker tag :production).
       # Examples:
       #   - Vercel: use amondnet/vercel-action
       #   - Netlify: use nwtgck/actions-netlify

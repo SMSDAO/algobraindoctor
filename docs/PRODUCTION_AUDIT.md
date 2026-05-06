@@ -173,7 +173,8 @@ domain auto-detection, style selection, PII/injection safety, and versioning met
 **Risk:** LOW
 **Description:** No wallet connection, signature verification, or Web3 auth binding existed.
 **Status:** ✅ FIXED — Added `src/services/web3.ts` with EIP-1193 wallet connection,
-SIWE-compatible challenge generation, signature verification, and WalletConnect extension point.
+SIWE-compatible challenge generation, structural signature format checking (hex-format validation
+only — full cryptographic verification must be performed server-side), and WalletConnect extension point.
 
 ---
 

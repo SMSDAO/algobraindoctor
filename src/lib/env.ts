@@ -16,7 +16,10 @@ const envSchema = z.object({
    */
   VITE_OPENAI_PROXY_URL: z.string().url().optional(),
   /** OpenAI model name, defaults to gpt-4o-mini for cost efficiency. */
-  VITE_OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+  VITE_OPENAI_MODEL: z
+    .string()
+    .transform((v) => (v.trim() === '' ? undefined : v))
+    .pipe(z.string().min(1).default('gpt-4o-mini')),
   /** OpenAI API base URL – override to use compatible proxies. */
   VITE_OPENAI_BASE_URL: z.string().url().default('https://api.openai.com/v1'),
   /** Max tokens returned per prompt optimization request. */

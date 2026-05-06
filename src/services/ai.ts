@@ -109,10 +109,14 @@ async function fetchCompletion(
   const url = proxyUrl ?? `${env.VITE_OPENAI_BASE_URL}/chat/completions`
 
   // Single AbortController handles both the 30 s timeout and any caller-provided signal.
-  // Forwarding the caller's abort to our controller means controller.signal is the
-  // single source of truth — both paths (timeout and caller cancel) abort the same fetch.
+  // We track whether the timeout fired so we can emit a distinct error message from
+  // a caller-initiated cancellation.
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  let timedOut = false
+  const timeoutId = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, REQUEST_TIMEOUT_MS)
 
   if (request.signal) {
     request.signal.addEventListener('abort', () => controller.abort(), { once: true })
@@ -186,7 +190,10 @@ async function fetchCompletion(
     if (err instanceof RetryableError) throw err
 
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error(`AI request timed out after ${REQUEST_TIMEOUT_MS}ms`)
+      if (timedOut) {
+        throw new Error(`AI request timed out after ${REQUEST_TIMEOUT_MS}ms`)
+      }
+      throw new Error('AI request was cancelled')
     }
 
     throw err

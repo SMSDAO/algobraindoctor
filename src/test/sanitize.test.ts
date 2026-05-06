@@ -48,6 +48,13 @@ describe('sanitize', () => {
       expect(result.sanitized).toContain('user@example.com')
     })
 
+    it('should not false-positive on pipe character in TLD position', () => {
+      // Regression: old regex [A-Z|a-z] matched | in TLD, causing false positives
+      const result = sanitizePrompt('email: invalid@domain.|pipe', { stripPii: true })
+      // The pipe makes it an invalid email so PII should not be flagged
+      expect(result.sanitized).not.toContain('[EMAIL]')
+    })
+
     it('should strip PII — email address when stripPii is true', () => {
       const result = sanitizePrompt('Contact me at user@example.com for details', { stripPii: true })
       expect(result.piiDetected).toBe(true)
@@ -112,6 +119,12 @@ describe('sanitize', () => {
 
     it('should throw for empty string', () => {
       expect(() => validateAndSanitizePrompt('')).toThrow('non-empty string')
+    })
+
+    it('should throw for whitespace-only input', () => {
+      expect(() => validateAndSanitizePrompt('   ')).toThrow('non-empty string')
+      expect(() => validateAndSanitizePrompt('\n\n\n')).toThrow('non-empty string')
+      expect(() => validateAndSanitizePrompt('\t  \t')).toThrow('non-empty string')
     })
 
     it('should throw for null-like input', () => {
