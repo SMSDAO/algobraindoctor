@@ -90,9 +90,7 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {filteredEvents.length > 0 && (
-              <SelectItem value="all">All Events</SelectItem>
-            )}
+            <SelectItem value="all">All Events</SelectItem>
             <SelectItem value="scan">Scans</SelectItem>
             <SelectItem value="governance">Governance</SelectItem>
             <SelectItem value="healing">Healing</SelectItem>
@@ -111,7 +109,7 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
         </Button>
       </div>
 
-      <div className="space-y-2 sm:space-y-3 max-h-[400px] overflow-y-auto pr-1 sm:pr-2">
+      <div className="space-y-2 sm:space-y-3 max-h-[55vh] overflow-y-auto pr-1 sm:pr-2">
         {filteredEvents.length === 0 ? (
           <div className="py-6 sm:py-8 text-center text-muted-foreground text-xs sm:text-sm">
             No events found
@@ -161,7 +159,7 @@ export function HealthTimeline({ events }: HealthTimelineProps) {
                     {event.metadata && Object.keys(event.metadata).length > 0 && (
                       <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
                         {Object.entries(event.metadata)
-                          .filter(([key, value]) => value !== undefined && value !== null)
+                          .filter(([, value]) => value !== undefined && value !== null)
                           .map(([key, value]) => (
                             <div
                               key={key}

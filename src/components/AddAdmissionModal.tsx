@@ -79,7 +79,7 @@ export function AddAdmissionModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-xl bg-card/95 backdrop-blur-md neon-border-aqua glow-aqua">
+      <DialogContent className="max-w-[95vw] sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-md neon-border-aqua glow-aqua">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl font-space flex items-center gap-2">
             <GitPullRequest size={22} className="text-[var(--aura-aqua)]" />

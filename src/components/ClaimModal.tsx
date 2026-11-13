@@ -52,7 +52,7 @@ export function ClaimModal({ open, onOpenChange, onSubmit }: ClaimModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-lg bg-card/95 backdrop-blur-md neon-border-violet glow-violet">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-md neon-border-violet glow-violet">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-2xl font-space flex items-center gap-2">
             <IdentificationCard size={24} className="sm:w-7 sm:h-7 text-[var(--aura-violet)]" />

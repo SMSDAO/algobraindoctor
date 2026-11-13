@@ -250,9 +250,9 @@ export function AdmissionTable({
           No admitted repos or PRs match the active filter.
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+        <div className="rounded-lg border border-border bg-card/50 backdrop-blur-sm max-h-[520px] overflow-y-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-card/95 backdrop-blur-sm z-10">
               <TableRow className="hover:bg-transparent border-border">
                 <TableHead className="text-xs">Target & Branch</TableHead>
                 <TableHead className="text-xs text-right">Score / Gate</TableHead>

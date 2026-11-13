@@ -120,7 +120,8 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
       scoreHistoryData.slice(-7).reduce((sum, d) => sum + d.healthScore, 0) / 7
     const prevAvgHealth =
       scoreHistoryData.slice(-14, -7).reduce((sum, d) => sum + d.healthScore, 0) / 7
-    const healthChange = ((currentAvgHealth - prevAvgHealth) / prevAvgHealth) * 100
+    const healthChange =
+      prevAvgHealth > 0 ? ((currentAvgHealth - prevAvgHealth) / prevAvgHealth) * 100 : 0
 
     const eventChange = last7Days.length - prev7Days.length
 
@@ -325,30 +326,36 @@ export function HealthTrendCharts({ events, repo, className }: HealthTrendCharts
                 Breakdown of events by severity level
               </p>
             </div>
-            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
-              <PieChart>
-                <Pie
-                  data={severityData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {severityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#11151C',
-                    border: '1px solid #1C212B',
-                    borderRadius: '8px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            {severityData.length === 0 ? (
+              <div className="py-12 text-center text-xs sm:text-sm text-muted-foreground">
+                No severity events recorded for this repository yet.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
+                <PieChart>
+                  <Pie
+                    data={severityData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {severityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#11151C',
+                      border: '1px solid #1C212B',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
             <Card className="mt-3 sm:mt-4 p-3 sm:p-4 border-border bg-card/30">
               <div className="space-y-1.5 sm:space-y-2">
                 {severityData.map((item) => (

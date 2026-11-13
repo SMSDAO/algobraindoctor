@@ -41,6 +41,8 @@ import {
   TimelineEvent,
   AdmissionEntry,
   ReleaseReadinessState,
+  IdentityClaim,
+  IdentityClaimType,
 } from '@/lib/types'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
@@ -69,6 +71,7 @@ function App() {
   const [logs, setLogs] = useKV<LogEntry[]>('logs', [])
   const [healdecLogs, setHealdecLogs] = useKV<HealdecLogEntry[]>('healdec-logs', [])
   const [timelineEvents, setTimelineEvents] = useKV<TimelineEvent[]>('timeline-events', [])
+  const [claims, setClaims] = useKV<IdentityClaim[]>('identity-claims', [])
   const [admissions, setAdmissions] = useKV<AdmissionEntry[]>(
     'admissions',
     generateInitialAdmissions(),
@@ -102,6 +105,7 @@ function App() {
   const rolePermissions = ROLE_PERMISSIONS[(selectedRole ?? 'user') as Role] ?? []
   const canWriteRepos = rolePermissions.includes('repos:write')
   const canWriteClaims = rolePermissions.includes('claims:write')
+  const canAdminClaims = rolePermissions.includes('claims:admin')
 
   useEffect(() => {
     if ((timelineEvents || []).length === 0 && (repositories || []).length > 0) {
@@ -586,21 +590,139 @@ function App() {
     toast.success('First stable release v1.0.0 tagged & broadcast!')
   }
 
+  const handleWorkerClick = (worker: Worker) => {
+    const now = new Date().toISOString()
+    const wasUnhealthy = worker.status !== 'healthy'
+    setWorkers((currentWorkers) =>
+      (currentWorkers || []).map((w) =>
+        w.id === worker.id
+          ? {
+              ...w,
+              status: 'healthy',
+              lastRun: now,
+              jobsCompleted: w.jobsCompleted + 1,
+              queueSize: Math.max(0, w.queueSize - 1),
+            }
+          : w,
+      ),
+    )
+
+    if (wasUnhealthy) {
+      const healEntry: HealdecLogEntry = {
+        id: `heal-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        timestamp: now,
+        workerType: worker.type,
+        action: 'repair_triggered',
+        reason: `Manual worker recovery executed for ${worker.type} worker (was ${worker.status})`,
+        jobId: `job-${Date.now().toString(36)}`,
+      }
+      setHealdecLogs((prev) => [healEntry, ...(prev || [])].slice(0, 100))
+      toast.success(`Recovered ${worker.type} worker to healthy state`)
+    } else {
+      toast.success(`${worker.type} worker heartbeat verified`, {
+        description: `Queue depth: ${Math.max(0, worker.queueSize - 1)} · Avg ${worker.avgDuration}ms`,
+      })
+    }
+
+    appendSystemLog({
+      id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      timestamp: now,
+      level: 'info',
+      workerType: worker.type,
+      message: wasUnhealthy
+        ? `Healdec recovered ${worker.type} worker from ${worker.status} -> healthy`
+        : `Dispatched live pulse check on ${worker.type} worker`,
+    })
+  }
+
+  const handleHealDegradedWorkers = () => {
+    const current = workers || []
+    const unhealthy = current.filter((w) => w.status !== 'healthy')
+    if (unhealthy.length === 0) {
+      toast.info('All active workers are already healthy')
+      return
+    }
+    const now = new Date().toISOString()
+    setWorkers(
+      current.map((w) =>
+        w.status !== 'healthy'
+          ? { ...w, status: 'healthy', lastRun: now, queueSize: Math.max(0, w.queueSize - 1) }
+          : w,
+      ),
+    )
+    const entries: HealdecLogEntry[] = unhealthy.map((w, idx) => ({
+      id: `heal-${Date.now()}-${idx}`,
+      timestamp: now,
+      workerType: w.type,
+      action: 'repair_triggered',
+      reason: `Fleet-wide Healdec recovery restored ${w.type} worker from ${w.status} to healthy`,
+      jobId: `fleet-heal-${Date.now().toString(36)}-${idx}`,
+    }))
+    setHealdecLogs((prev) => [...entries, ...(prev || [])].slice(0, 100))
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: now,
+      level: 'info',
+      workerType: 'maintenance',
+      message: `Healdec fleet pass restored ${unhealthy.length} worker(s) to healthy`,
+    })
+    toast.success(`Restored ${unhealthy.length} worker(s) via Healdec`)
+  }
+
   const handleClaimSubmit = (claim: {
     identityType: string
     handle: string
-    claimType: string
+    claimType: IdentityClaimType
     evidence: string
   }) => {
+    const now = new Date().toISOString()
+    const newClaim: IdentityClaim = {
+      id: `claim-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      identityId: `${claim.identityType}:${claim.handle}`,
+      repoId: selectedRepo
+        ? `${selectedRepo.owner}/${selectedRepo.name}`
+        : (repositories || [])[0]
+          ? `${(repositories || [])[0].owner}/${(repositories || [])[0].name}`
+          : 'SMSDAO/algobraindoctor',
+      claimType: claim.claimType,
+      status: 'pending',
+      evidence: claim.evidence ? { note: claim.evidence, provider: claim.identityType } : undefined,
+      createdAt: now,
+    }
+    setClaims((prev) => [newClaim, ...(prev || [])])
+
     const newLog: LogEntry = {
       id: `log-${Date.now()}`,
-      timestamp: new Date().toISOString(),
+      timestamp: now,
       level: 'info',
       workerType: 'identity',
       message: `Identity claim submitted: ${claim.handle} as ${claim.claimType}`,
       context: claim,
     }
     setLogs((currentLogs) => [newLog, ...(currentLogs || [])].slice(0, 100))
+  }
+
+  const handleUpdateClaimStatus = (claimId: string, nextStatus: 'verified' | 'rejected') => {
+    const now = new Date().toISOString()
+    setClaims((prev) =>
+      (prev || []).map((c) =>
+        c.id === claimId
+          ? {
+              ...c,
+              status: nextStatus,
+              verifiedAt: nextStatus === 'verified' ? now : undefined,
+            }
+          : c,
+      ),
+    )
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: now,
+      level: nextStatus === 'verified' ? 'info' : 'warn',
+      workerType: 'identity',
+      message: `Claim ${claimId.slice(0, 14)} marked as ${nextStatus}`,
+    })
+    toast.success(`Identity claim ${nextStatus}`)
   }
 
   const healthyWorkers = (workers || []).filter((w) => w.status === 'healthy').length
@@ -692,7 +814,7 @@ function App() {
               />
             </div>
 
-            <div className="space-y-2 max-h-[calc(100vh-340px)] lg:max-h-[calc(100vh-320px)] overflow-y-auto">
+            <div className="space-y-2 max-h-[340px] lg:max-h-[calc(100vh-300px)] overflow-y-auto pr-1">
               {filteredRepos.length === 0 && (repositories || []).length === 0 ? (
                 <div className="py-8 sm:py-10 text-center space-y-3 sm:space-y-4">
                   <Database size={40} className="sm:w-12 sm:h-12 mx-auto text-muted-foreground opacity-50" />
@@ -808,66 +930,142 @@ function App() {
               </TabsContent>
 
               <TabsContent value="analytics" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <h3 className="text-sm sm:text-base font-space font-semibold">Fleet Health Analytics</h3>
-                  <Badge variant="outline" className="text-[10px] sm:text-xs">
-                    Real-time metrics
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {(repositories || []).length === 0 && (
+                      <Button size="sm" variant="outline" onClick={handleSeedData} className="h-7 text-xs">
+                        <Database size={13} className="mr-1" />
+                        Load Sample Fleet
+                      </Button>
+                    )}
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">
+                      Real-time metrics
+                    </Badge>
+                  </div>
                 </div>
                 <FleetHealthCharts repositories={repositories || []} workers={workers || []} />
               </TabsContent>
 
               <TabsContent value="workers" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <h3 className="text-sm sm:text-base font-space font-semibold">Worker Pool Status</h3>
-                  <Badge variant="outline" className="text-[10px] sm:text-xs">
-                    12 Parallel Workers
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {(workers || []).some((w) => w.status !== 'healthy') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleHealDegradedWorkers}
+                        className="h-7 text-xs neon-border-aqua"
+                      >
+                        <ShieldCheck size={13} className="mr-1 text-[var(--aura-aqua)]" />
+                        Heal Unhealthy
+                      </Button>
+                    )}
+                    <Badge variant="outline" className="text-[10px] sm:text-xs tabular-nums">
+                      {(workers || []).length} Parallel Workers
+                    </Badge>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  {(workers || []).map((worker) => (
-                    <WorkerCard key={worker.id} worker={worker} />
-                  ))}
-                </div>
+                {(workers || []).length === 0 ? (
+                  <div className="p-6 sm:p-8 text-center rounded-lg border border-dashed border-border bg-card/40 space-y-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      No telemetry workers initialized yet. Load the sample fleet to inspect live worker pools.
+                    </p>
+                    <Button size="sm" variant="outline" onClick={handleSeedData} className="text-xs">
+                      <Database size={14} className="mr-1.5" />
+                      Initialize 12 Workers
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    {(workers || []).map((worker) => (
+                      <WorkerCard
+                        key={worker.id}
+                        worker={worker}
+                        onClick={() => handleWorkerClick(worker)}
+                      />
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="healing" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <h3 className="text-sm sm:text-base font-space font-semibold">
                     Auto-Healing Activity
                   </h3>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setHealdecModalOpen(true)}
-                    className="text-xs"
-                  >
-                    View Full Log
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {(healdecLogs || []).slice(0, 5).map((log) => (
-                    <div
-                      key={log.id}
-                      className="p-2.5 sm:p-3 rounded-lg border border-border bg-card/50 text-xs sm:text-sm"
+                  <div className="flex items-center gap-2">
+                    {(workers || []).some((w) => w.status !== 'healthy') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleHealDegradedWorkers}
+                        className="text-xs neon-border-aqua"
+                      >
+                        <ShieldCheck size={13} className="mr-1 text-[var(--aura-aqua)]" />
+                        Heal Degraded Workers
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setHealdecModalOpen(true)}
+                      className="text-xs"
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <Badge variant="outline" className="text-[10px] sm:text-xs">
-                          {log.action}
-                        </Badge>
-                        <span className="text-[10px] sm:text-xs text-muted-foreground font-mono">
-                          {new Date(log.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
-                      <div className="text-muted-foreground">{log.reason}</div>
-                    </div>
-                  ))}
+                      View Full Log
+                    </Button>
+                  </div>
                 </div>
+                {(healdecLogs || []).length === 0 ? (
+                  <div className="p-6 sm:p-8 text-center rounded-lg border border-dashed border-border bg-card/40 space-y-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      No Healdec recovery events recorded yet. Trigger a repair gate or load sample fleet telemetry.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleRunAllScoringGates}
+                        className="text-xs neon-border-aqua"
+                      >
+                        Run Admission Gates
+                      </Button>
+                      {(workers || []).length === 0 && (
+                        <Button size="sm" variant="outline" onClick={handleSeedData} className="text-xs">
+                          <Database size={14} className="mr-1.5" />
+                          Load Sample Data
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                    {(healdecLogs || []).slice(0, 10).map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-2.5 sm:p-3 rounded-lg border border-border bg-card/50 text-xs sm:text-sm"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <Badge variant="outline" className="text-[10px] sm:text-xs">
+                            {log.action} · {log.workerType}
+                          </Badge>
+                          <span className="text-[10px] sm:text-xs text-muted-foreground font-mono">
+                            {new Date(log.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="text-muted-foreground">{log.reason}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="claims" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm sm:text-base font-space font-semibold">Recent Claims</h3>
+                  <h3 className="text-sm sm:text-base font-space font-semibold">
+                    Identity Claims ({(claims || []).length})
+                  </h3>
                   {canWriteClaims && (
                     <Button
                       size="sm"
@@ -879,9 +1077,83 @@ function App() {
                     </Button>
                   )}
                 </div>
-                <div className="p-6 sm:p-8 text-center text-muted-foreground text-xs sm:text-sm">
-                  No identity claims yet. Submit your first claim to get started.
-                </div>
+                {(claims || []).length === 0 ? (
+                  <div className="p-6 sm:p-8 text-center rounded-lg border border-dashed border-border bg-card/40 space-y-3">
+                    <p className="text-muted-foreground text-xs sm:text-sm">
+                      No identity claims yet. Submit your first claim to get started.
+                    </p>
+                    {canWriteClaims && (
+                      <Button
+                        size="sm"
+                        onClick={() => setClaimModalOpen(true)}
+                        className="neon-border-violet text-xs"
+                      >
+                        <Plus size={14} className="mr-1" />
+                        Submit Identity Claim
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                    {(claims || []).map((claim) => (
+                      <div
+                        key={claim.id}
+                        className="p-3 rounded-lg border border-border bg-card/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm"
+                      >
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono font-semibold text-foreground truncate">
+                              {claim.identityId}
+                            </span>
+                            <Badge variant="outline" className="text-[10px] uppercase">
+                              {claim.claimType}
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className={
+                                claim.status === 'verified'
+                                  ? 'text-[10px] text-[var(--aura-aqua)] border-[var(--aura-aqua)]/40'
+                                  : claim.status === 'rejected'
+                                    ? 'text-[10px] text-[var(--aura-coral)] border-[var(--aura-coral)]/40'
+                                    : 'text-[10px] text-[var(--aura-yellow)] border-[var(--aura-yellow)]/40'
+                              }
+                            >
+                              {claim.status}
+                            </Badge>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground font-mono truncate">
+                            Repo: {claim.repoId} · {new Date(claim.createdAt).toLocaleString()}
+                          </div>
+                          {typeof claim.evidence?.note === 'string' && claim.evidence.note && (
+                            <p className="text-xs text-muted-foreground break-words">
+                              {claim.evidence.note}
+                            </p>
+                          )}
+                        </div>
+                        {canAdminClaims && claim.status === 'pending' && (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleUpdateClaimStatus(claim.id, 'verified')}
+                              className="h-7 text-[11px] neon-border-aqua"
+                            >
+                              Verify
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleUpdateClaimStatus(claim.id, 'rejected')}
+                              className="h-7 text-[11px] text-[var(--aura-coral)]"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="release" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
@@ -898,9 +1170,12 @@ function App() {
             </Tabs>
           </div>
 
-          <div className="lg:col-span-3 space-y-3 sm:space-y-4 hidden lg:block">
+          <div className="lg:col-span-3 space-y-3 sm:space-y-4">
             <h2 className="text-base sm:text-lg font-space font-semibold">Live System Log</h2>
-            <SmartBrainTerminal logs={logs || []} maxHeight="calc(100vh - 200px)" />
+            <SmartBrainTerminal
+              logs={logs || []}
+              maxHeight={isMobile ? '320px' : 'calc(100vh - 200px)'}
+            />
           </div>
         </div>
       </div>
@@ -910,6 +1185,7 @@ function App() {
         onOpenChange={setVitalsModalOpen}
         repo={selectedRepo}
         timelineEvents={selectedRepoEvents}
+        onAdmitRepo={handleAdmitFromFleetRepo}
       />
       <HealdecModal
         open={healdecModalOpen}

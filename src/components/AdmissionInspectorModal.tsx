@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   AdmissionEntry,
   RepairStageStatus,
@@ -172,8 +171,8 @@ export function AdmissionInspectorModal({
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="pipeline" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 h-auto">
+        <Tabs defaultValue="pipeline" className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <TabsList className="grid w-full grid-cols-2 h-auto shrink-0">
             <TabsTrigger value="pipeline" className="text-xs sm:text-sm py-2">
               <Wrench size={14} className="mr-1.5" />
               10-Domain Repair & Scoring
@@ -184,7 +183,7 @@ export function AdmissionInspectorModal({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pipeline" className="flex-1 overflow-y-auto space-y-4 py-3 pr-1">
+          <TabsContent value="pipeline" className="flex-1 min-h-0 overflow-y-auto space-y-4 py-3 pr-1">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3">
               <div className="flex items-center gap-3">
                 <Switch
@@ -295,8 +294,8 @@ export function AdmissionInspectorModal({
             </div>
           </TabsContent>
 
-          <TabsContent value="sync" className="flex-1 overflow-hidden flex flex-col gap-3 py-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3">
+          <TabsContent value="sync" className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 py-3 pr-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3 shrink-0">
               <div className="space-y-0.5">
                 <div className="text-xs font-space font-semibold flex items-center gap-2">
                   <span>Bidirectional GitHub Synchronization</span>
@@ -352,22 +351,22 @@ export function AdmissionInspectorModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 min-h-0">
               {/* Left: Outbound Push & Commit Ledger */}
-              <div className="flex flex-col rounded-lg border border-border bg-card/40 overflow-hidden">
-                <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+              <div className="flex flex-col rounded-lg border border-border bg-card/40 overflow-hidden min-h-[260px]">
+                <div className="px-3 py-2 border-b border-border flex items-center justify-between shrink-0">
                   <span className="text-xs font-space font-semibold flex items-center gap-1.5">
                     <GitCommit size={15} className="text-[var(--aura-yellow)]" />
                     Repair Branch Pushes ({entry.pushes.length})
                   </span>
                 </div>
-                <div className="p-2.5 border-b border-border bg-background/30 flex gap-2">
+                <div className="p-2.5 border-b border-border bg-background/30 flex gap-2 shrink-0">
                   <input
                     type="text"
                     value={commitMsg}
                     onChange={(e) => setCommitMsg(e.target.value)}
                     placeholder="Optional custom commit message..."
-                    className="flex-1 bg-background border border-border rounded px-2.5 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="flex-1 min-w-0 bg-background border border-border rounded px-2.5 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   <Button
                     size="sm"
@@ -376,12 +375,12 @@ export function AdmissionInspectorModal({
                       onPushRepair(entry, commitMsg.trim() || undefined)
                       setCommitMsg('')
                     }}
-                    className="text-xs whitespace-nowrap"
+                    className="text-xs whitespace-nowrap shrink-0"
                   >
                     Push Commit
                   </Button>
                 </div>
-                <ScrollArea className="flex-1 p-2.5">
+                <div className="flex-1 min-h-0 max-h-[320px] overflow-y-auto p-2.5">
                   <div className="space-y-2">
                     {entry.pushes.length === 0 ? (
                       <div className="py-8 text-center text-xs text-muted-foreground">
@@ -407,12 +406,12 @@ export function AdmissionInspectorModal({
                       ))
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </div>
 
               {/* Right: 2-Way GitHub Comments */}
-              <div className="flex flex-col rounded-lg border border-border bg-card/40 overflow-hidden">
-                <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+              <div className="flex flex-col rounded-lg border border-border bg-card/40 overflow-hidden min-h-[260px]">
+                <div className="px-3 py-2 border-b border-border flex items-center justify-between shrink-0">
                   <span className="text-xs font-space font-semibold flex items-center gap-1.5">
                     <ChatCircleText size={15} className="text-[var(--aura-aqua)]" />
                     2-Way PR / Repo Comments ({entry.comments.length})
@@ -424,7 +423,7 @@ export function AdmissionInspectorModal({
 
                 <form
                   onSubmit={handleCommentSubmit}
-                  className="p-2.5 border-b border-border bg-background/30 space-y-2"
+                  className="p-2.5 border-b border-border bg-background/30 space-y-2 shrink-0"
                 >
                   <Textarea
                     value={commentBody}
@@ -441,7 +440,7 @@ export function AdmissionInspectorModal({
                   </div>
                 </form>
 
-                <ScrollArea className="flex-1 p-2.5">
+                <div className="flex-1 min-h-0 max-h-[260px] overflow-y-auto p-2.5">
                   <div className="space-y-2">
                     {entry.comments.length === 0 ? (
                       <div className="py-8 text-center text-xs text-muted-foreground">
@@ -469,7 +468,7 @@ export function AdmissionInspectorModal({
                       ))
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </div>
             </div>
           </TabsContent>

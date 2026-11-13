@@ -6,7 +6,8 @@ import {
 } from '@/components/ui/dialog'
 import { Repository, TimelineEvent } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
-import { Pulse, ChartLine, TrendUp, ClockCounterClockwise, ChartLineUp } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Pulse, ChartLine, TrendUp, ClockCounterClockwise, ChartLineUp, GitPullRequest } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { HealthTimeline } from '@/components/HealthTimeline'
 import { HealthTrendCharts } from '@/components/HealthTrendCharts'
@@ -17,9 +18,10 @@ interface VitalsModalProps {
   onOpenChange: (open: boolean) => void
   repo: Repository | null
   timelineEvents?: TimelineEvent[]
+  onAdmitRepo?: (repo: Repository) => void
 }
 
-export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: VitalsModalProps) {
+export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [], onAdmitRepo }: VitalsModalProps) {
   if (!repo) return null
 
   const metrics = [
@@ -49,19 +51,36 @@ export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: V
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col bg-card/95 backdrop-blur-md neon-border-aqua glow-aqua">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-2xl font-space flex items-center gap-2">
-            <Pulse size={24} className="sm:w-7 sm:h-7 text-[var(--aura-aqua)]" />
-            <span className="hidden sm:inline">Repository Health Dashboard</span>
-            <span className="sm:hidden">Health Dashboard</span>
-          </DialogTitle>
-          <div className="text-xs sm:text-sm text-muted-foreground font-mono truncate">
-            {repo.owner}/{repo.name}
+        <DialogHeader className="shrink-0 pr-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <DialogTitle className="text-lg sm:text-2xl font-space flex items-center gap-2">
+                <Pulse size={24} className="sm:w-7 sm:h-7 text-[var(--aura-aqua)]" />
+                <span className="hidden sm:inline">Repository Health Dashboard</span>
+                <span className="sm:hidden">Health Dashboard</span>
+              </DialogTitle>
+              <div className="text-xs sm:text-sm text-muted-foreground font-mono truncate mt-1">
+                {repo.owner}/{repo.name}
+              </div>
+            </div>
+            {onAdmitRepo && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  onAdmitRepo(repo)
+                  onOpenChange(false)
+                }}
+                className="neon-border-aqua glow-aqua text-xs whitespace-nowrap self-start sm:self-auto"
+              >
+                <GitPullRequest size={14} className="mr-1.5" />
+                Admit for Repair & Sync
+              </Button>
+            )}
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="overview" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
+        <Tabs defaultValue="overview" className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <TabsList className="grid w-full grid-cols-3 h-auto shrink-0">
             <TabsTrigger value="overview" className="text-xs sm:text-sm py-2">
               <Pulse size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
               Overview
@@ -76,7 +95,7 @@ export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: V
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 py-3 sm:py-4">
+          <TabsContent value="overview" className="flex-1 min-h-0 overflow-y-auto space-y-4 sm:space-y-6 py-3 sm:py-4 pr-1">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {metrics.map((metric) => {
                 const Icon = metric.icon
@@ -95,7 +114,7 @@ export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: V
                         {metric.label}
                       </div>
                     </div>
-                    <div className={cn('text-2xl sm:text-3xl font-mono font-bold', metric.color)}>
+                    <div className={cn('text-2xl sm:text-3xl font-mono font-bold tabular-nums', metric.color)}>
                       {metric.value}
                     </div>
                     <div className="mt-1 flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
@@ -122,7 +141,7 @@ export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: V
                 </div>
                 <div>
                   <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Identity Claims</div>
-                  <div className="font-mono text-xs sm:text-sm">{repo.claimsCount}</div>
+                  <div className="font-mono text-xs sm:text-sm tabular-nums">{repo.claimsCount}</div>
                 </div>
                 <div>
                   <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Provider</div>
@@ -149,15 +168,15 @@ export function VitalsModal({ open, onOpenChange, repo, timelineEvents = [] }: V
             )}
           </TabsContent>
 
-          <TabsContent value="charts" className="flex-1 overflow-y-auto py-3 sm:py-4">
-            <HealthTrendCharts 
+          <TabsContent value="charts" className="flex-1 min-h-0 overflow-y-auto py-3 sm:py-4 pr-1">
+            <HealthTrendCharts
               events={timelineEvents}
               repo={repo}
             />
           </TabsContent>
 
-          <TabsContent value="timeline" className="flex-1 overflow-hidden py-3 sm:py-4">
-            <HealthTimeline 
+          <TabsContent value="timeline" className="flex-1 min-h-0 overflow-y-auto py-3 sm:py-4 pr-1">
+            <HealthTimeline
               events={timelineEvents}
             />
           </TabsContent>
