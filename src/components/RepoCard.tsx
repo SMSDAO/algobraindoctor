@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Pulse, GitBranch, IdentificationCard } from '@phosphor-icons/react'
+import { Pulse, GitBranch, IdentificationCard, GitPullRequest } from '@phosphor-icons/react'
 import { Repository } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { HealthSparkline } from '@/components/HealthSparkline'
@@ -8,10 +8,11 @@ import { HealthSparkline } from '@/components/HealthSparkline'
 interface RepoCardProps {
   repo: Repository
   onClick?: () => void
+  onAdmit?: (repo: Repository) => void
   selected?: boolean
 }
 
-export function RepoCard({ repo, onClick, selected }: RepoCardProps) {
+export function RepoCard({ repo, onClick, onAdmit, selected }: RepoCardProps) {
   const healthColor =
     repo.healthScore >= 80
       ? 'text-[var(--aura-aqua)]'
@@ -89,8 +90,23 @@ export function RepoCard({ repo, onClick, selected }: RepoCardProps) {
           </div>
         )}
 
-        <div className="text-[10px] sm:text-xs text-muted-foreground font-mono">
-          Last indexed: {new Date(repo.lastIndexedAt).toLocaleString()}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div className="text-[10px] sm:text-xs text-muted-foreground font-mono truncate">
+            Last indexed: {new Date(repo.lastIndexedAt).toLocaleString()}
+          </div>
+          {onAdmit && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onAdmit(repo)
+              }}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded border border-border bg-background/60 hover:bg-muted text-[11px] font-medium text-[var(--aura-aqua)] shrink-0 transition-colors cursor-pointer"
+            >
+              <GitPullRequest size={12} />
+              Admit
+            </button>
+          )}
         </div>
       </CardContent>
     </Card>

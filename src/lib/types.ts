@@ -168,3 +168,124 @@ export interface LogEntry {
   message: string
   context?: Record<string, unknown>
 }
+
+export type AdmissionTargetType = 'repo' | 'pr'
+
+export type RepairStageKey =
+  | 'languages'
+  | 'dependencies'
+  | 'workflows'
+  | 'environments'
+  | 'env'
+  | 'devServer'
+  | 'tests'
+  | 'builds'
+  | 'cloud'
+  | 'deployments'
+
+export type RepairStageStatus =
+  | 'pending'
+  | 'running'
+  | 'passed'
+  | 'fixed'
+  | 'skipped'
+  | 'failed'
+
+export type AdmissionDecision =
+  | 'pending_eval'
+  | 'skip_healthy'
+  | 'repair_needed'
+  | 'repairing'
+  | 'verified_ready'
+  | 'failed'
+
+export type SyncStatus =
+  | 'synced'
+  | 'pending_push'
+  | 'pending_pull'
+  | 'conflict'
+  | 'local_only'
+
+export interface RepairStageResult {
+  key: RepairStageKey
+  label: string
+  category: string
+  status: RepairStageStatus
+  issuesFound: number
+  fixesApplied: number
+  summary: string
+  command?: string
+  durationMs: number
+}
+
+export interface AdmissionScoreBreakdown {
+  overall: number
+  languages: number
+  dependencies: number
+  workflows: number
+  tests: number
+  buildAndDeploy: number
+  cloudAndEnv: number
+}
+
+export interface GitHubSyncComment {
+  id: string
+  remoteId?: number
+  author: string
+  role: RoleType
+  body: string
+  createdAt: string
+  direction: 'inbound' | 'outbound'
+  synced: boolean
+  url?: string
+}
+
+export interface GitHubPushEvent {
+  id: string
+  branch: string
+  commitSha: string
+  commitMessage: string
+  filesChanged: string[]
+  pushedAt: string
+  prNumber?: number
+  prUrl?: string
+  delivery: 'github_api' | 'local_outbox'
+}
+
+export interface AdmissionEntry {
+  id: string
+  targetType: AdmissionTargetType
+  owner: string
+  repoName: string
+  branch: string
+  prNumber?: number
+  prTitle?: string
+  githubUrl: string
+  submittedByRole: RoleType
+  submittedAt: string
+  updatedAt: string
+  languages: string[]
+  scoreThreshold: number
+  repairOnlyIfNeeded: boolean
+  decision: AdmissionDecision
+  scores: AdmissionScoreBreakdown
+  stages: RepairStageResult[]
+  syncStatus: SyncStatus
+  twoWaySyncEnabled: boolean
+  lastSyncedAt?: string
+  remoteStars?: number
+  remoteOpenPrs?: number
+  remoteDefaultBranch?: string
+  comments: GitHubSyncComment[]
+  pushes: GitHubPushEvent[]
+  releaseCandidateTag?: string
+}
+
+export interface ReleaseReadinessState {
+  version: string
+  status: 'preparing' | 'ready' | 'released'
+  releasedAt?: string
+  releaseNotes?: string
+  tagCommitSha?: string
+}
+

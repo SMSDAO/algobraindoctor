@@ -12,10 +12,15 @@ import { VitalsModal } from '@/components/VitalsModal'
 import { HealdecModal } from '@/components/HealdecModal'
 import { ClaimModal } from '@/components/ClaimModal'
 import { FleetHealthCharts } from '@/components/FleetHealthCharts'
+import { AdmissionTable } from '@/components/AdmissionTable'
+import { AddAdmissionModal } from '@/components/AddAdmissionModal'
+import { AdmissionInspectorModal } from '@/components/AdmissionInspectorModal'
+import { ReleaseReadinessPanel } from '@/components/ReleaseReadinessPanel'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
   Brain,
   GitBranch,
+  GitPullRequest,
   Gear,
   ShieldCheck,
   IdentificationCard,
@@ -23,6 +28,8 @@ import {
   MagnifyingGlass,
   Database,
   ChartLineUp,
+  RocketLaunch,
+  ListChecks,
 } from '@phosphor-icons/react'
 import {
   Repository,
@@ -32,13 +39,27 @@ import {
   RoleType,
   WorkerType,
   TimelineEvent,
+  AdmissionEntry,
+  ReleaseReadinessState,
 } from '@/lib/types'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import { generateSeedData } from '@/lib/seedData'
+import { generateSeedData, generateInitialAdmissions } from '@/lib/seedData'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { createSession, ROLE_PERMISSIONS, type Role } from '@/services/auth'
+import {
+  parseGitHubTarget,
+  fetchGitHubSnapshot,
+  pullGitHubUpdates,
+  addOutboundComment,
+  pushRepairBranchSync,
+  reconcileTwoWaySync,
+  generateCommitSha,
+} from '@/services/githubSync'
+import {
+  buildAdmissionEntry,
+  evaluateAndProcessAdmission,
+} from '@/services/admissionEngine'
 
 function App() {
   const isMobile = useIsMobile()
@@ -48,11 +69,23 @@ function App() {
   const [logs, setLogs] = useKV<LogEntry[]>('logs', [])
   const [healdecLogs, setHealdecLogs] = useKV<HealdecLogEntry[]>('healdec-logs', [])
   const [timelineEvents, setTimelineEvents] = useKV<TimelineEvent[]>('timeline-events', [])
-  
+  const [admissions, setAdmissions] = useKV<AdmissionEntry[]>(
+    'admissions',
+    generateInitialAdmissions(),
+  )
+  const [releaseState, setReleaseState] = useKV<ReleaseReadinessState>('release-state', {
+    version: 'v1.0.0',
+    status: 'preparing',
+  })
+
+  const [activeTab, setActiveTab] = useState('admission')
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null)
+  const [selectedAdmissionId, setSelectedAdmissionId] = useState<string | null>(null)
   const [vitalsModalOpen, setVitalsModalOpen] = useState(false)
   const [healdecModalOpen, setHealdecModalOpen] = useState(false)
   const [claimModalOpen, setClaimModalOpen] = useState(false)
+  const [addAdmissionOpen, setAddAdmissionOpen] = useState(false)
+  const [inspectorOpen, setInspectorOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Sync the auth service session whenever the selected role changes so that
@@ -209,9 +242,348 @@ function App() {
     setWorkers(seedData.workers)
     setHealdecLogs(seedData.healdecLogs)
     setLogs(seedData.logs)
+    if ((admissions || []).length === 0) {
+      setAdmissions(generateInitialAdmissions())
+    }
     toast.success('Sample data loaded successfully!', {
       description: `${seedData.repositories.length} repos, ${seedData.workers.length} workers, and system logs initialized.`,
     })
+  }
+
+  const appendSystemLog = (entry: LogEntry) => {
+    setLogs((currentLogs) => [entry, ...(currentLogs || [])].slice(0, 100))
+  }
+
+  const syncAdmissionToFleet = (entry: AdmissionEntry) => {
+    const now = new Date().toISOString()
+    setRepositories((currentRepos) => {
+      const list = currentRepos || []
+      const idx = list.findIndex(
+        (r) =>
+          r.owner.toLowerCase() === entry.owner.toLowerCase() &&
+          r.name.toLowerCase() === entry.repoName.toLowerCase(),
+      )
+      if (idx >= 0) {
+        const updated = [...list]
+        updated[idx] = {
+          ...updated[idx],
+          healthScore: Math.max(updated[idx].healthScore, entry.scores.overall),
+          governanceScore: Math.max(updated[idx].governanceScore, entry.scores.workflows),
+          lastIndexedAt: now,
+          frameworks:
+            entry.languages.length > 0 ? entry.languages : updated[idx].frameworks,
+        }
+        return updated
+      }
+      const newRepo: Repository = {
+        id: `repo-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        provider: 'github',
+        owner: entry.owner,
+        name: entry.repoName,
+        defaultBranch: entry.remoteDefaultBranch || entry.branch || 'main',
+        lastIndexedAt: now,
+        healthScore: entry.scores.overall,
+        activityScore: entry.scores.tests,
+        governanceScore: entry.scores.workflows,
+        claimsCount: 1,
+        frameworks: entry.languages.length > 0 ? entry.languages : ['TypeScript'],
+      }
+      return [newRepo, ...list]
+    })
+  }
+
+  const handleAdmitTarget = async (params: {
+    targetInput: string
+    branchOverride?: string
+    scoreThreshold: number
+    repairOnlyIfNeeded: boolean
+    twoWaySyncEnabled: boolean
+    autoEvaluate: boolean
+  }) => {
+    const parsed = parseGitHubTarget(params.targetInput, params.branchOverride || 'main')
+    if (params.branchOverride) {
+      parsed.branch = params.branchOverride
+    }
+
+    const snapshot = await fetchGitHubSnapshot(parsed)
+    let entry = buildAdmissionEntry({
+      target: parsed,
+      snapshot,
+      submittedByRole: (selectedRole ?? 'user') as RoleType,
+      scoreThreshold: params.scoreThreshold,
+      repairOnlyIfNeeded: params.repairOnlyIfNeeded,
+      twoWaySyncEnabled: params.twoWaySyncEnabled,
+    })
+
+    if (params.autoEvaluate) {
+      const evalRes = evaluateAndProcessAdmission(entry)
+      entry = evalRes.updated
+      if (evalRes.healdecLog) {
+        setHealdecLogs((prev) => [evalRes.healdecLog!, ...(prev || [])].slice(0, 100))
+      }
+      appendSystemLog(evalRes.systemLog)
+    } else {
+      appendSystemLog({
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        level: 'info',
+        workerType: 'ingest',
+        message: `Admitted ${entry.owner}/${entry.repoName}${entry.prNumber ? `#${entry.prNumber}` : ''} (score ${entry.scores.overall}/${entry.scoreThreshold})`,
+        context: { role: selectedRole, targetType: entry.targetType },
+      })
+    }
+
+    setAdmissions((prev) => [entry, ...(prev || [])])
+    syncAdmissionToFleet(entry)
+    setActiveTab('admission')
+    toast.success(
+      `${entry.owner}/${entry.repoName}${entry.prNumber ? `#${entry.prNumber}` : ''} admitted`,
+      {
+        description:
+          entry.decision === 'skip_healthy'
+            ? `Score ${entry.scores.overall} ≥ ${entry.scoreThreshold} — skipped repair.`
+            : entry.decision === 'verified_ready'
+              ? `Repaired & verified (${entry.scores.overall}/100).`
+              : `Queued for repair (score ${entry.scores.overall} < ${entry.scoreThreshold}).`,
+      },
+    )
+  }
+
+  const handleAdmitFromFleetRepo = async (repo: Repository) => {
+    await handleAdmitTarget({
+      targetInput: `${repo.owner}/${repo.name}`,
+      branchOverride: repo.defaultBranch,
+      scoreThreshold: 85,
+      repairOnlyIfNeeded: true,
+      twoWaySyncEnabled: true,
+      autoEvaluate: true,
+    })
+  }
+
+  const handleRunEvaluation = (entry: AdmissionEntry, forceRepair = false) => {
+    const result = evaluateAndProcessAdmission(entry, { forceRepair })
+    setAdmissions((prev) =>
+      (prev || []).map((item) => (item.id === entry.id ? result.updated : item)),
+    )
+    if (result.healdecLog) {
+      setHealdecLogs((prev) => [result.healdecLog!, ...(prev || [])].slice(0, 100))
+    }
+    appendSystemLog(result.systemLog)
+    syncAdmissionToFleet(result.updated)
+
+    if (result.didRepair) {
+      toast.success(`Repaired & verified ${entry.owner}/${entry.repoName}`, {
+        description: `Score improved to ${result.updated.scores.overall}/100 across all 10 stages.`,
+      })
+    } else {
+      toast.info(`Skipped repair for ${entry.owner}/${entry.repoName}`, {
+        description: `Score ${entry.scores.overall} already meets threshold ${entry.scoreThreshold}.`,
+      })
+    }
+  }
+
+  const handleRunAllScoringGates = () => {
+    const current = admissions || []
+    if (current.length === 0) return
+    let repairedCount = 0
+    let skippedCount = 0
+    const nextHealdec: HealdecLogEntry[] = []
+    const nextLogs: LogEntry[] = []
+
+    const nextAdmissions = current.map((entry) => {
+      const res = evaluateAndProcessAdmission(entry)
+      if (res.didRepair) repairedCount++
+      else skippedCount++
+      if (res.healdecLog) nextHealdec.push(res.healdecLog)
+      nextLogs.push(res.systemLog)
+      syncAdmissionToFleet(res.updated)
+      return res.updated
+    })
+
+    setAdmissions(nextAdmissions)
+    if (nextHealdec.length > 0) {
+      setHealdecLogs((prev) => [...nextHealdec, ...(prev || [])].slice(0, 100))
+    }
+    setLogs((prev) => [...nextLogs, ...(prev || [])].slice(0, 100))
+    toast.success('Scoring gate completed across admission queue', {
+      description: `${repairedCount} repaired & verified · ${skippedCount} healthy skipped.`,
+    })
+  }
+
+  const handleToggleRepairPolicy = (entryId: string, repairOnlyIfNeeded: boolean) => {
+    setAdmissions((prev) =>
+      (prev || []).map((item) =>
+        item.id === entryId
+          ? { ...item, repairOnlyIfNeeded, updatedAt: new Date().toISOString() }
+          : item,
+      ),
+    )
+  }
+
+  const handlePullSync = async (entry: AdmissionEntry) => {
+    const res = await pullGitHubUpdates(entry)
+    setAdmissions((prev) =>
+      (prev || []).map((item) => (item.id === entry.id ? res.updated : item)),
+    )
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      workerType: 'sync',
+      message: `GitHub inbound pull for ${entry.owner}/${entry.repoName}: ${res.pulledComments} new comment(s)`,
+      context: { fetchedFromApi: res.fetchedFromApi },
+    })
+    toast.success('Pulled updates from GitHub', {
+      description: res.fetchedFromApi
+        ? `Live metadata & ${res.pulledComments} new comment(s) synced.`
+        : 'GitHub API offline/rate-limited — local state preserved.',
+    })
+  }
+
+  const handlePushRepair = (entry: AdmissionEntry, commitMessage?: string) => {
+    const updated = pushRepairBranchSync(entry, {
+      commitMessage,
+      postSummaryComment: true,
+      author: 'spark-user',
+      role: (selectedRole ?? 'user') as RoleType,
+    })
+    setAdmissions((prev) =>
+      (prev || []).map((item) => (item.id === entry.id ? updated : item)),
+    )
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      workerType: 'sync',
+      message: `Pushed repair branch ${updated.pushes[0]?.branch} (${updated.pushes[0]?.commitSha}) for ${entry.owner}/${entry.repoName}`,
+      context: { files: updated.pushes[0]?.filesChanged },
+    })
+    toast.success('Repair branch & summary comment pushed', {
+      description: `${updated.pushes[0]?.branch} · ${updated.pushes[0]?.commitSha}`,
+    })
+  }
+
+  const handleReconcileTwoWay = async (entry: AdmissionEntry) => {
+    const res = await reconcileTwoWaySync(entry)
+    setAdmissions((prev) =>
+      (prev || []).map((item) => (item.id === entry.id ? res.updated : item)),
+    )
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      workerType: 'sync',
+      message: `2-way GitHub sync reconciled for ${entry.owner}/${entry.repoName} (pulled ${res.pulledComments}, flushed ${res.flushedItems})`,
+    })
+    toast.success('2-way GitHub sync reconciled', {
+      description: `Pulled ${res.pulledComments} comment(s), flushed ${res.flushedItems} outbound item(s).`,
+    })
+  }
+
+  const handleSyncAll = async () => {
+    const current = admissions || []
+    if (current.length === 0) return
+    const results = await Promise.all(current.map((entry) => reconcileTwoWaySync(entry)))
+    setAdmissions(results.map((r) => r.updated))
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      workerType: 'sync',
+      message: `Completed 2-way GitHub sync across ${results.length} admitted targets`,
+    })
+    toast.success(`Synced ${results.length} targets with GitHub 2-way`)
+  }
+
+  const handlePostComment = (entry: AdmissionEntry, body: string) => {
+    const updated = addOutboundComment(
+      entry,
+      body,
+      'spark-user',
+      (selectedRole ?? 'user') as RoleType,
+    )
+    setAdmissions((prev) =>
+      (prev || []).map((item) => (item.id === entry.id ? updated : item)),
+    )
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      workerType: 'sync',
+      message: `Posted comment on ${entry.owner}/${entry.repoName}${entry.prNumber ? `#${entry.prNumber}` : ''}`,
+      context: { role: selectedRole, synced: updated.twoWaySyncEnabled },
+    })
+    toast.success('Comment added to 2-way GitHub sync thread')
+  }
+
+  const handleRemoveAdmission = (entryId: string) => {
+    setAdmissions((prev) => (prev || []).filter((item) => item.id !== entryId))
+    if (selectedAdmissionId === entryId) {
+      setSelectedAdmissionId(null)
+    }
+    toast.info('Removed entry from admission queue')
+  }
+
+  const handleRunAllGatesAndSync = async () => {
+    const current = admissions || []
+    const evaluated = current.map((entry) => {
+      const res = evaluateAndProcessAdmission(entry)
+      if (res.healdecLog) {
+        setHealdecLogs((prev) => [res.healdecLog!, ...(prev || [])].slice(0, 100))
+      }
+      return res.updated
+    })
+    const synced = await Promise.all(
+      evaluated.map(async (entry) => {
+        const withPush =
+          entry.decision === 'verified_ready' && entry.pushes.length === 0
+            ? pushRepairBranchSync(entry, { postSummaryComment: true })
+            : entry
+        const reconciled = await reconcileTwoWaySync(withPush)
+        syncAdmissionToFleet(reconciled.updated)
+        return reconciled.updated
+      }),
+    )
+    setAdmissions(synced)
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      workerType: 'maintenance',
+      message: `Cleared scoring gates and 2-way GitHub sync for ${synced.length} release targets`,
+    })
+    toast.success('All admission gates & 2-way syncs cleared for release')
+  }
+
+  const handleCutStableRelease = (notes: string) => {
+    const now = new Date().toISOString()
+    const tagCommitSha = generateCommitSha(`release-v1.0.0:${now}`)
+    setReleaseState({
+      version: 'v1.0.0',
+      status: 'released',
+      releasedAt: now,
+      releaseNotes: notes,
+      tagCommitSha,
+    })
+    setAdmissions((prev) =>
+      (prev || []).map((entry) =>
+        addOutboundComment(
+          { ...entry, releaseCandidateTag: 'v1.0.0' },
+          `[Release v1.0.0 · ${tagCommitSha}] ${notes}`,
+          'release-bot',
+          (selectedRole ?? 'admin') as RoleType,
+        ),
+      ),
+    )
+    appendSystemLog({
+      id: `log-${Date.now()}`,
+      timestamp: now,
+      level: 'info',
+      workerType: 'export',
+      message: `Cut first stable production release v1.0.0 (tag commit ${tagCommitSha})`,
+      context: { admittedCount: (admissions || []).length },
+    })
+    toast.success('First stable release v1.0.0 tagged & broadcast!')
   }
 
   const handleClaimSubmit = (claim: {
@@ -232,10 +604,12 @@ function App() {
   }
 
   const healthyWorkers = (workers || []).filter((w) => w.status === 'healthy').length
-  const totalJobs = (workers || []).reduce((sum, w) => sum + w.jobsCompleted, 0)
   const avgHealth = (repositories || []).length > 0
     ? Math.round((repositories || []).reduce((sum, r) => sum + r.healthScore, 0) / (repositories || []).length)
     : 0
+
+  const selectedAdmission =
+    (admissions || []).find((a) => a.id === selectedAdmissionId) ?? null
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -249,23 +623,32 @@ function App() {
               <div className="min-w-0">
                 <h1 className="text-base sm:text-xl font-space font-bold truncate">AlgoBrainDoctor</h1>
                 <div className="text-[10px] sm:text-xs text-muted-foreground font-mono hidden sm:block">
-                  Social Index & Identity Network v0.1
+                  Social Index, Repair Admission & 2-Way GitHub Sync · {releaseState?.version ?? 'v1.0.0'}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <div className="hidden lg:flex items-center gap-2 text-sm">
-                <Badge variant="outline" className="glow-aqua neon-border-aqua text-xs">
+                <Badge variant="outline" className="glow-aqua neon-border-aqua text-xs tabular-nums">
                   {healthyWorkers}/{(workers || []).length} Workers
                 </Badge>
-                <Badge variant="outline" className="glow-violet neon-border-violet text-xs">
-                  {totalJobs} Jobs
+                <Badge variant="outline" className="glow-violet neon-border-violet text-xs tabular-nums">
+                  {(admissions || []).length} Admitted
                 </Badge>
-                <Badge variant="outline" className="glow-yellow neon-border-yellow text-xs">
+                <Badge variant="outline" className="glow-yellow neon-border-yellow text-xs tabular-nums">
                   Avg Health: {avgHealth}
                 </Badge>
               </div>
+
+              <Button
+                size="sm"
+                onClick={() => setAddAdmissionOpen(true)}
+                className="neon-border-aqua glow-aqua text-xs whitespace-nowrap"
+              >
+                <Plus size={14} className="sm:mr-1" />
+                <span className="hidden sm:inline">Admit Repo / PR</span>
+              </Button>
 
               <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as RoleType)}>
                 <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm">
@@ -293,7 +676,7 @@ function App() {
                 <span className="hidden sm:inline">Fleet Navigator</span>
                 <span className="sm:hidden">Fleet</span>
               </h2>
-              <Badge className="font-mono text-xs">{(repositories || []).length}</Badge>
+              <Badge className="font-mono text-xs tabular-nums">{(repositories || []).length}</Badge>
             </div>
 
             <div className="relative">
@@ -309,26 +692,37 @@ function App() {
               />
             </div>
 
-            <div className="space-y-2 max-h-[calc(100vh-300px)] lg:max-h-[calc(100vh-280px)] overflow-y-auto">
+            <div className="space-y-2 max-h-[calc(100vh-340px)] lg:max-h-[calc(100vh-320px)] overflow-y-auto">
               {filteredRepos.length === 0 && (repositories || []).length === 0 ? (
-                <div className="py-8 sm:py-12 text-center space-y-3 sm:space-y-4">
+                <div className="py-8 sm:py-10 text-center space-y-3 sm:space-y-4">
                   <Database size={40} className="sm:w-12 sm:h-12 mx-auto text-muted-foreground opacity-50" />
                   <div>
                     <p className="text-xs sm:text-sm text-muted-foreground mb-2">No repositories indexed yet</p>
-                    {canWriteRepos ? (
+                    <div className="flex flex-col gap-2 items-center">
                       <Button
                         size="sm"
-                        onClick={handleSeedData}
-                        className="neon-border-violet glow-violet text-xs sm:text-sm"
+                        onClick={() => setAddAdmissionOpen(true)}
+                        className="neon-border-aqua glow-aqua text-xs sm:text-sm"
                       >
-                        <Database size={14} className="sm:w-4 sm:h-4 mr-1.5" />
-                        Load Sample Data
+                        <GitPullRequest size={14} className="mr-1.5" />
+                        Add Repo or PR
                       </Button>
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic">
-                        Switch to Admin or Developer role to load data
-                      </p>
-                    )}
+                      {canWriteRepos ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleSeedData}
+                          className="text-xs sm:text-sm"
+                        >
+                          <Database size={14} className="sm:w-4 sm:h-4 mr-1.5" />
+                          Load Sample Data
+                        </Button>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">
+                          Anyone can admit repos/PRs above
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : filteredRepos.length === 0 ? (
@@ -341,47 +735,77 @@ function App() {
                     key={repo.id}
                     repo={repo}
                     onClick={() => handleRepoClick(repo)}
+                    onAdmit={handleAdmitFromFleetRepo}
                     selected={selectedRepo?.id === repo.id}
                   />
                 ))
               )}
             </div>
 
-            {!isMobile && canWriteClaims && (
+            <div className="space-y-2">
               <Button
-                className="w-full neon-border-violet glow-violet text-xs sm:text-sm"
-                onClick={() => setClaimModalOpen(true)}
+                variant="outline"
+                className="w-full neon-border-aqua text-xs sm:text-sm"
+                onClick={() => setAddAdmissionOpen(true)}
               >
-                <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
-                Submit Identity Claim
+                <GitPullRequest size={16} className="mr-1.5 text-[var(--aura-aqua)]" />
+                Admit Repo / PR to Repair
               </Button>
-            )}
+              {!isMobile && canWriteClaims && (
+                <Button
+                  className="w-full neon-border-violet glow-violet text-xs sm:text-sm"
+                  onClick={() => setClaimModalOpen(true)}
+                >
+                  <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  Submit Identity Claim
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-            <Tabs defaultValue="analytics" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 h-auto">
-                <TabsTrigger value="analytics" className="text-xs sm:text-sm py-2">
-                  <ChartLineUp size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Analytics</span>
-                  <span className="sm:hidden">Data</span>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-6 h-auto">
+                <TabsTrigger value="admission" className="text-[11px] sm:text-xs py-2 px-1">
+                  <ListChecks size={14} className="sm:mr-1 shrink-0" />
+                  <span className="hidden sm:inline truncate">Admission</span>
                 </TabsTrigger>
-                <TabsTrigger value="workers" className="text-xs sm:text-sm py-2">
-                  <Gear size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Workers</span>
-                  <span className="sm:hidden">Work</span>
+                <TabsTrigger value="analytics" className="text-[11px] sm:text-xs py-2 px-1">
+                  <ChartLineUp size={14} className="sm:mr-1 shrink-0" />
+                  <span className="hidden sm:inline truncate">Analytics</span>
                 </TabsTrigger>
-                <TabsTrigger value="healing" className="text-xs sm:text-sm py-2">
-                  <ShieldCheck size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Healdec</span>
-                  <span className="sm:hidden">Heal</span>
+                <TabsTrigger value="workers" className="text-[11px] sm:text-xs py-2 px-1">
+                  <Gear size={14} className="sm:mr-1 shrink-0" />
+                  <span className="hidden sm:inline truncate">Workers</span>
                 </TabsTrigger>
-                <TabsTrigger value="claims" className="text-xs sm:text-sm py-2">
-                  <IdentificationCard size={14} className="sm:w-4 sm:h-4 mr-1 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Claims</span>
-                  <span className="sm:hidden">IDs</span>
+                <TabsTrigger value="healing" className="text-[11px] sm:text-xs py-2 px-1">
+                  <ShieldCheck size={14} className="sm:mr-1 shrink-0" />
+                  <span className="hidden sm:inline truncate">Healdec</span>
+                </TabsTrigger>
+                <TabsTrigger value="claims" className="text-[11px] sm:text-xs py-2 px-1">
+                  <IdentificationCard size={14} className="sm:mr-1 shrink-0" />
+                  <span className="hidden sm:inline truncate">Claims</span>
+                </TabsTrigger>
+                <TabsTrigger value="release" className="text-[11px] sm:text-xs py-2 px-1">
+                  <RocketLaunch size={14} className="sm:mr-1 shrink-0" />
+                  <span className="hidden sm:inline truncate">Release</span>
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="admission" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
+                <AdmissionTable
+                  entries={admissions || []}
+                  onOpenAddModal={() => setAddAdmissionOpen(true)}
+                  onSelectEntry={(entry) => {
+                    setSelectedAdmissionId(entry.id)
+                    setInspectorOpen(true)
+                  }}
+                  onRunEvaluation={handleRunEvaluation}
+                  onRunAllScoringGates={handleRunAllScoringGates}
+                  onSyncEntry={handleReconcileTwoWay}
+                  onSyncAll={handleSyncAll}
+                />
+              </TabsContent>
 
               <TabsContent value="analytics" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
                 <div className="flex items-center justify-between">
@@ -459,6 +883,18 @@ function App() {
                   No identity claims yet. Submit your first claim to get started.
                 </div>
               </TabsContent>
+
+              <TabsContent value="release" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
+                <ReleaseReadinessPanel
+                  admissions={admissions || []}
+                  repositories={repositories || []}
+                  releaseState={
+                    releaseState || { version: 'v1.0.0', status: 'preparing' }
+                  }
+                  onRunAllGatesAndSync={handleRunAllGatesAndSync}
+                  onCutStableRelease={handleCutStableRelease}
+                />
+              </TabsContent>
             </Tabs>
           </div>
 
@@ -484,6 +920,26 @@ function App() {
         open={claimModalOpen}
         onOpenChange={setClaimModalOpen}
         onSubmit={handleClaimSubmit}
+      />
+      <AddAdmissionModal
+        open={addAdmissionOpen}
+        onOpenChange={setAddAdmissionOpen}
+        currentRole={(selectedRole ?? 'user') as RoleType}
+        fleetRepos={repositories || []}
+        onAdmit={handleAdmitTarget}
+      />
+      <AdmissionInspectorModal
+        open={inspectorOpen}
+        onOpenChange={setInspectorOpen}
+        entry={selectedAdmission}
+        currentRole={(selectedRole ?? 'user') as RoleType}
+        onTogglePolicy={handleToggleRepairPolicy}
+        onRunEvaluation={handleRunEvaluation}
+        onPullSync={handlePullSync}
+        onPushRepair={handlePushRepair}
+        onReconcileTwoWay={handleReconcileTwoWay}
+        onPostComment={handlePostComment}
+        onRemoveEntry={handleRemoveAdmission}
       />
 
       {isMobile && canWriteClaims && (

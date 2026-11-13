@@ -1,4 +1,6 @@
-import { Repository, Worker, HealdecLogEntry, LogEntry } from './types'
+import { Repository, Worker, HealdecLogEntry, LogEntry, AdmissionEntry } from './types'
+import { buildAdmissionEntry, evaluateAndProcessAdmission } from '@/services/admissionEngine'
+import { addOutboundComment, pushRepairBranchSync } from '@/services/githubSync'
 
 export function generateSeedData() {
   const repositories: Repository[] = [
@@ -259,3 +261,108 @@ export function generateSeedData() {
 
   return { repositories, workers, healdecLogs, logs }
 }
+
+export function generateInitialAdmissions(): AdmissionEntry[] {
+  const prEntry = buildAdmissionEntry({
+    target: {
+      targetType: 'pr',
+      owner: 'SMSDAO',
+      repoName: 'algobraindoctor',
+      prNumber: 18,
+      branch: 'feat/production-v1-admission',
+      githubUrl: 'https://github.com/SMSDAO/algobraindoctor/pull/18',
+    },
+    snapshot: {
+      fetchedFromApi: false,
+      defaultBranch: 'main',
+      languages: ['TypeScript', 'React', 'Dockerfile'],
+      prTitle: 'PR #18 — Production v1.0.0 Admission & Dev Server Binding',
+      prBranch: 'feat/production-v1-admission',
+      remoteComments: [
+        {
+          id: 'seed-gh-comment-1',
+          remoteId: 90124,
+          author: 'octo-reviewer',
+          role: 'validator',
+          body: 'CI workflow failed on port 3000 pre-warming and strict TS check. Please admit for full repair.',
+          createdAt: new Date(Date.now() - 1800000).toISOString(),
+          direction: 'inbound',
+          synced: true,
+          url: 'https://github.com/SMSDAO/algobraindoctor/pull/18',
+        },
+      ],
+      failingWorkflows: 2,
+      totalWorkflows: 4,
+    },
+    submittedByRole: 'developer',
+    scoreThreshold: 85,
+    repairOnlyIfNeeded: true,
+    twoWaySyncEnabled: true,
+    presetOverallScore: 64,
+  })
+
+  const healthyEntry = buildAdmissionEntry({
+    target: {
+      targetType: 'repo',
+      owner: 'algorand',
+      repoName: 'go-algorand',
+      branch: 'master',
+      githubUrl: 'https://github.com/algorand/go-algorand',
+    },
+    snapshot: {
+      fetchedFromApi: false,
+      defaultBranch: 'master',
+      languages: ['Go', 'Docker', 'Shell'],
+      remoteComments: [],
+      failingWorkflows: 0,
+      totalWorkflows: 6,
+    },
+    submittedByRole: 'admin',
+    scoreThreshold: 85,
+    repairOnlyIfNeeded: true,
+    twoWaySyncEnabled: true,
+    presetOverallScore: 93,
+  })
+
+  const rawRepairedEntry = buildAdmissionEntry({
+    target: {
+      targetType: 'pr',
+      owner: 'algorand',
+      repoName: 'js-algorand-sdk',
+      prNumber: 142,
+      branch: 'fix/esm-bundle-env',
+      githubUrl: 'https://github.com/algorand/js-algorand-sdk/pull/142',
+    },
+    snapshot: {
+      fetchedFromApi: false,
+      defaultBranch: 'develop',
+      languages: ['TypeScript', 'Node.js'],
+      prTitle: 'PR #142 — ESM Build & Dependency Audit Fix',
+      prBranch: 'fix/esm-bundle-env',
+      remoteComments: [],
+      failingWorkflows: 1,
+      totalWorkflows: 3,
+    },
+    submittedByRole: 'user',
+    scoreThreshold: 85,
+    repairOnlyIfNeeded: true,
+    twoWaySyncEnabled: true,
+    presetOverallScore: 71,
+  })
+
+  const evaluated = evaluateAndProcessAdmission(rawRepairedEntry).updated
+  const pushed = pushRepairBranchSync(evaluated, {
+    postSummaryComment: true,
+    author: 'algobrain-bot',
+    role: 'admin',
+  })
+  const verifiedEntry = addOutboundComment(
+    pushed,
+    'All 10 repair stages verified. Production build and unit tests passing for v1.0.0 release.',
+    'spark-user',
+    'admin',
+  )
+
+  return [prEntry, healthyEntry, verifiedEntry]
+}
+
